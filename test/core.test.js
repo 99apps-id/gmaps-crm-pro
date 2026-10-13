@@ -71,6 +71,19 @@ describe('Katalog global bilingual', () => {
     assert.ok(keywordsForCategory('konsultan_pajak', 'id').length > 0);
     assert.ok(keywordsForCategory('konsultan_pajak', 'en').includes('tax consultant'));
   });
+  it('kategori agro-marine + sekolah tersedia bilingual', () => {
+    const all = new Set();
+    CATEGORY_SECTORS.forEach((s) => s.categories.forEach((c) => all.add(c.id)));
+    for (const id of ['budidaya_perikanan', 'kelautan', 'pertanian', 'perkebunan', 'pakan_hewan',
+      'sekolah_umum', 'sdit', 'smpit', 'smait', 'smk', 'sekolah_sunnah', 'pesantren', 'homeschooling']) {
+      assert.ok(all.has(id), 'hilang: ' + id);
+      assert.ok(keywordsForCategory(id, 'id').length > 0, 'keyword id kosong: ' + id);
+      assert.ok(keywordsForCategory(id, 'en').length > 0, 'keyword en kosong: ' + id);
+    }
+    assert.ok(keywordsForCategory('sdit', 'id').includes('sdit'));
+    assert.ok(keywordsForCategory('pesantren', 'id').includes('pesantren'));
+    assert.ok(keywordsForCategory('perkebunan', 'id').includes('perkebunan'));
+  });
   it('cityMeta Tokyo ketemu', () => {
     assert.equal(cityMeta('Tokyo')?.country, 'JP');
   });
