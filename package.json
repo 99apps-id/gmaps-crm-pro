@@ -21,9 +21,7 @@
     "dist:linux": "electron-builder --linux",
     "dist:all": "electron-builder -mwl"
   },
-  "dependencies": {
-    "exceljs": "^4.4.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "electron": "^34.0.0",
     "electron-builder": "^25.0.0"
@@ -42,6 +40,7 @@
       "lib/catalog.js",
       "lib/crm.js",
       "lib/excel.js",
+      "lib/xlsx.js",
       "lib/license.js",
       "lib/payment.js",
       "lib/scrape-runner.js",

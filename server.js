@@ -300,10 +300,13 @@ function readEngineAllowlist() {
 
 function authorizeEngineSerial(serial) {
   const s = String(serial || '').trim();
-  // GCRM: tanpa serial = ditolak (anti-jailbreak). Trial tetap dibatasi
-  // oleh lisensi lokal di perangkat masing-masing.
+  // Tanpa serial = trial dengan caps ketat + rate limit (anti-abuse).
+  // Set ENGINE_REQUIRE_SERIAL=1 bila VPS hanya untuk pelanggan aktivasi.
   if (!s) {
-    throw Object.assign(new Error('Aktivasi diperlukan untuk memakai engine GCRM.'), { status: 403, code: 'ENGINE_AUTH' });
+    if (process.env.ENGINE_REQUIRE_SERIAL === '1') {
+      throw Object.assign(new Error('Aktivasi diperlukan untuk memakai engine GCRM.'), { status: 403, code: 'ENGINE_AUTH' });
+    }
+    return { trial: true, listed: false };
   }
   const check = validateSerial(s);
   if (!check.ok) {
@@ -315,12 +318,37 @@ function authorizeEngineSerial(serial) {
     if (list.revoked.has(needle)) {
       throw Object.assign(new Error('Serial telah dicabut (revoked).'), { status: 403, code: 'ENGINE_REVOKED' });
     }
-    if (!list.licenses.has(needle)) {
+    const strict = process.env.ENGINE_STRICT === '1';
+    if (strict && !list.licenses.has(needle)) {
       throw Object.assign(new Error('Serial tidak terdaftar di VPS.'), { status: 403, code: 'ENGINE_NOT_LISTED' });
     }
-    return { trial: false, listed: true };
+    return { trial: false, listed: list.licenses.has(needle) };
   }
   return { trial: false, listed: true };
+}
+
+// Rate limit per IP untuk job trial (anti-abuse VPS). Serial terdaftar bebas.
+const engineTrialHits = new Map();
+function checkEngineTrialLimit(ip) {
+  const maxPerHour = Math.max(1, parseInt(process.env.ENGINE_TRIAL_PER_HOUR || '5', 10) || 5);
+  const now = Date.now();
+  const rec = engineTrialHits.get(ip);
+  if (!rec || now > rec.resetAt) {
+    engineTrialHits.set(ip, { count: 1, resetAt: now + 3600 * 1000 });
+    return true;
+  }
+  rec.count++;
+  if (rec.count > maxPerHour) return false;
+  if (engineTrialHits.size > 5000 && Math.random() < 0.01) {
+    for (const [k, v] of engineTrialHits) if (now > v.resetAt) engineTrialHits.delete(k);
+  }
+  return true;
+}
+
+function engineClientIp(req) {
+  const fwd = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  if (/^[0-9a-fA-F:.]{3,45}$/.test(fwd)) return fwd;
+  return req.socket?.remoteAddress || 'unknown';
 }
 
 const server = http.createServer(async (req, res) => {
@@ -561,9 +589,30 @@ const server = http.createServer(async (req, res) => {
     try {
       const payload = await readJsonBody(req);
       const serial = String(payload?.serial || '').trim();
-      authorizeEngineSerial(serial);
+      const auth = authorizeEngineSerial(serial);
       const rawJob = payload?.job || {};
       const job = validateScrapePayload(rawJob);
+      // Batas anti-abuse: trial (tanpa serial) & serial tak terdaftar.
+      const list = readEngineAllowlist();
+      const allowlistConfigured = Boolean(
+        process.env.ENGINE_ALLOWLIST_FILE || process.env.LICENSE_ALLOWLIST || process.env.PAYMENT_STORE_FILE ||
+        fs.existsSync(path.join(__dirname, 'licenses.json'))
+      );
+      if (!list && allowlistConfigured) {
+        throw Object.assign(new Error('Daftar lisensi VPS tak tersedia, coba lagi.'), { status: 503, code: 'ENGINE_ALLOWLIST' });
+      }
+      const listed = auth.listed || (list ? list.licenses.has(serial.toUpperCase()) : true);
+      if (!listed) {
+        if (auth.trial) {
+          const ip = engineClientIp(req);
+          if (!checkEngineTrialLimit(ip)) {
+            throw Object.assign(new Error('Batas trial VPS tercapai (maksimal 5 job/jam). Aktivasi untuk tanpa batas.'), { status: 429, code: 'ENGINE_RATE_LIMIT' });
+          }
+        }
+        job.depth = Math.min(job.depth, 1);
+        job.cities = job.cities.slice(0, 2);
+        job.keywordVariants = [];
+      }
       const plan = buildScrapePlan(job);
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
       const send = (obj) => { try { res.write(`data: ${JSON.stringify(obj)}\n\n`); } catch { /* putus */ } };
