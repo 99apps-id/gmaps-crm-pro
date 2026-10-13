@@ -13,7 +13,7 @@ import { CATEGORY_SECTORS, COUNTRIES, cityMeta, keywordsForCategory, labelForCat
 import { getLicenseStatus, markOnboarded, activateLicenseOnline, validateSerial, loadLicenseState, deactivateLicense } from './lib/license.js';
 import { executeScrapePlan, provinceForCity, countryForCity } from './lib/scrape-runner.js';
 import { loadStore, saveStore, importRecords, getLead, updateLead, setStage, addActivity, activitiesFor, remindersDue, remindersUpcoming, funnelStats, breakdown, normalizePhone, STAGES, applyTemplate } from './lib/crm.js';
-import { WEBHOOK_PATH, CLAIM_PATH, FINISH_PATH, verifySingapaySignature, fulfillPaymentLink, claimByReff, findLatestOrderAfter, normalizeLicenseEntries, normalizeRevoked, findPlanForSerial, paymentOptions, fetchVpsOrderByReff, fetchUpstreamPlans, createPaymentLink } from './lib/payment.js';
+import { WEBHOOK_PATH, CLAIM_PATH, FINISH_PATH, verifySingapaySignature, fulfillPaymentLink, claimByReff, findLatestOrderAfter, normalizeLicenseEntries, normalizeRevoked, findPlanForSerial, paymentOptions, fetchVpsOrderByReff, fetchUpstreamPlans, createPaymentLink, resolveTransactionRefByLinkRef } from './lib/payment.js';
 
 const ENGINE_MODE = (process.env.ENGINE_MODE || 'local').toLowerCase();
 /** Engine GCRM HANYA di VPS (anti-jailbreak: klien tak pernah bawa engine). */
@@ -590,17 +590,26 @@ const server = http.createServer(async (req, res) => {
           <button type="submit">Tampilkan Kode</button>
         </form>`;
     } else {
-      const rec = claimByReff(ref);
+      let rec = claimByReff(ref);
+      let resolvedRef = ref;
+      if (!rec) {
+        const txRef = await resolveTransactionRefByLinkRef(ref).catch(() => null);
+        if (txRef) {
+          resolvedRef = txRef;
+          rec = claimByReff(txRef);
+        }
+      }
       if (rec) {
         const deep = `gmaps-crm-pro://activate?serial=${encodeURIComponent(rec.serial)}`;
         inner = `<p>Pembayaran terkonfirmasi (paket <b>${esc(rec.plan)}</b>, ${rec.days} hari).</p>
+           <p>Nomor referensi: <span class="serial">${esc(resolvedRef)}</span></p>
            <p>Kode aktivasi Anda:</p><div class="serial">${esc(rec.serial)}</div>` +
           (GCRM_BRAND
             ? `<a class="btn" href="${esc(deep)}">Aktifkan Otomatis di Aplikasi</a>
                <p><small>Belum terinstal? <a href="https://github.com/99apps-id/gmaps-crm-pro/releases/latest">Unduh GMaps CRM Pro</a>, lalu tempel kode di menu Lisensi.</small></p>`
             : `<p>Salin kode ke aplikasi: Pengaturan - Lisensi - Aktivasi.</p>`);
       } else {
-        inner = `<p class="missing">Referensi tidak ditemukan. Hubungi support@99apps.id.</p><p><a href="${CLAIM_PATH}">Coba lagi</a></p>`;
+        inner = `<p class="missing">Referensi tidak ditemukan. Periksa kembali nomornya atau hubungi support@99apps.id.</p><p><a href="${CLAIM_PATH}">Coba lagi</a></p>`;
       }
     }
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
