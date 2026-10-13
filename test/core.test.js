@@ -116,6 +116,18 @@ describe('Katalog global bilingual', () => {
       assert.ok(keywordsForCategory(id, 'en').length > 0, 'keyword en kosong: ' + id);
     }
   });
+  it('impor unik dari GMST (duplikat beda-nama dilewati)', () => {
+    const all = new Set();
+    CATEGORY_SECTORS.forEach((s) => s.categories.forEach((c) => all.add(c.id)));
+    for (const id of ['barbershop', 'fisioterapi', 'body_repair', 'coworking',
+      'toko_baja', 'distributor_stainless', 'toko_perkakas', 'supplier_atk',
+      'supplier_daging', 'sparepart_handphone', 'bilyar', 'tempat_wisata',
+      'toko_mainan', 'toko_perabotan']) {
+      assert.ok(all.has(id), 'hilang: ' + id);
+      assert.ok(keywordsForCategory(id, 'id').length > 0, 'keyword id kosong: ' + id);
+      assert.ok(keywordsForCategory(id, 'en').length > 0, 'keyword en kosong: ' + id);
+    }
+  });
   it('cityMeta Tokyo ketemu', () => {
     assert.equal(cityMeta('Tokyo')?.country, 'JP');
   });
