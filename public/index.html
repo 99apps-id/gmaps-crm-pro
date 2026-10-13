@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GMaps CRM Pro - Scraper Studio Global + CRM</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body>
+<div id="appTitlebar" hidden>
+  <div class="tb-brand"><span class="tb-dot"></span><span>GMaps CRM Pro</span><span id="titlebarLicense" class="tb-license"></span></div>
+  <div class="tb-controls">
+    <button id="winMinimize" aria-label="Minimize">—</button>
+    <button id="winMaximize" aria-label="Maximize">▢</button>
+    <button id="winClose" aria-label="Close">✕</button>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="brand">
+    <img class="brand-logo" src="logo-gmst.png" alt="GMST" width="38" height="38">
+    <div>
+      <div class="brand-name">GMaps CRM Pro</div>
+      <div class="brand-sub" data-i18n="tagline">Pencari usaha global + pengelola pelanggan</div>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="nav-tab-btn active" data-tab="tab-finder" data-i18n="tabFinder">Scraper Studio</button>
+    <button class="nav-tab-btn" data-tab="tab-results" data-i18n="tabResults">Hasil</button>
+    <button class="nav-tab-btn" data-tab="tab-crm" data-i18n="tabCrm">Pelanggan (CRM)</button>
+    <button class="nav-tab-btn" data-tab="tab-charts" data-i18n="tabCharts">Grafik</button>
+  </nav>
+  <div class="top-actions">
+    <div class="lang-switch" role="group" aria-label="Bahasa / Language">
+      <button id="langId" class="active">ID</button>
+      <button id="langEn">EN</button>
+    </div>
+    <button id="licensePill" class="license-pill" title="Status lisensi"><span id="licenseDot" class="license-dot"></span><span id="licensePillText">…</span></button>
+    <button id="btnSettingsMenu" aria-haspopup="true" aria-expanded="false">⚙</button>
+    <div id="settingsMenu" class="menu" hidden>
+      <button id="menuLicense" data-i18n="menuLicense">Lisensi</button>
+      <button id="menuLang" data-i18n="menuLang">Bahasa / Language</button>
+      <button id="menuAbout" data-i18n="menuAbout">Tentang</button>
+      <button id="menuExit" data-i18n="menuExit">Keluar</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- FINDER -->
+  <section id="tab-finder" class="tab-content active">
+    <div class="workbench">
+      <div class="panel finder-form-panel">
+        <h2 data-i18n="finderTitle">Cari calon pembeli</h2>
+        <p class="hint" data-i18n="finderHint">Pilih negara, kategori usaha, lalu wilayah. Bahasa non-teknis, tinggal klik.</p>
+        <label class="field"><span data-i18n="lblCountry">Negara</span><select id="selCountry"></select></label>
+        <label class="field"><span data-i18n="lblLang">Bahasa pencarian</span>
+          <select id="selSearchLang"><option value="id">Indonesia</option><option value="en">English</option></select>
+        </label>
+        <div class="field"><span data-i18n="lblCategory">Kategori usaha</span><div id="sectorContainer" class="sectors compact"></div></div>
+        <div class="field"><span data-i18n="lblRegion">Wilayah</span><div id="regionContainer" class="regions compact"></div></div>
+        <label class="field"><span data-i18n="lblKeyword">Kata kunci (opsional)</span><input id="customKeywordInput" data-i18n-ph="phKeyword" placeholder="cth: konsultan pajak"></label>
+        <div class="row-2">
+          <label class="field"><span data-i18n="lblDepth">Kedalaman</span>
+            <select id="studioDepthSelect"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+          </label>
+          <label class="field check"><input type="checkbox" id="studioProximityCheck" checked><span data-i18n="lblProximity">Sertakan sekitar</span></label>
+        </div>
+        <p id="scopeHint" class="scope-hint"></p>
+        <div class="finder-actions">
+          <button id="btnRunScrape" class="btn primary" data-i18n="btnStart">Mulai Mencari</button>
+          <button id="btnAbortScrape" class="btn danger" style="display:none" data-i18n="btnStop">Hentikan</button>
+        </div>
+      </div>
+      <div class="panel live-panel">
+        <div class="live-head">
+          <h2 data-i18n="liveTitle">Proses berjalan</h2>
+          <span id="scraperStateBadge" class="tag tag-emerald">Idle</span>
+        </div>
+        <div id="scrapeVisual" class="scan-visual" aria-hidden="true"><div class="scan-line"></div><div class="scan-pin">📍</div></div>
+        <div class="progress-meta"><span id="scrapePct">0%</span><span id="liveProgressCounter">0 usaha</span></div>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="liveProgressWrap"><div id="liveProgressBar" class="progress-fill"></div></div>
+        <p id="scrapeStatusLine" class="status-line" data-i18n="idleLine">Siaga — pilih kategori lalu mulai mencari</p>
+        <pre id="consoleLiveBox" class="console" aria-live="polite"></pre>
+        <div class="live-actions">
+          <button id="btnSendAllToCrm" class="btn" data-i18n="btnToCrm">Kirim semua ke CRM →</button>
+          <button id="btnExportFinder" class="btn ghost" data-i18n="btnDownload">Unduh (.xlsx)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="tab-results" class="tab-content">
+    <div class="panel wide">
+      <div class="results-head">
+        <div class="kpi-strip" id="resultsKpi">
+          <div class="kpi-card"><div class="kpi-num" id="kpiTotal">0</div><div class="kpi-lbl" data-i18n="kpiTotal">Total usaha</div></div>
+          <div class="kpi-card ok"><div class="kpi-num" id="kpiWa">0</div><div class="kpi-lbl" data-i18n="kpiWa">No. WA valid</div></div>
+          <div class="kpi-card warn"><div class="kpi-num" id="kpiRating">-</div><div class="kpi-lbl" data-i18n="kpiRating">Rata-rata rating</div></div>
+          <div class="kpi-card info"><div class="kpi-num" id="kpiCities">0</div><div class="kpi-lbl" data-i18n="kpiCities">Kota terjangkau</div></div>
+        </div>
+        <div class="results-title-group">
+          <h2 data-i18n="resultsTitle">Hasil pencarian</h2>
+          <div class="h2-sub">
+            <p><span id="filterMatchCount">0</span> <span data-i18n="resultsCount">usaha ditemukan</span></p>
+          </div>
+        </div>
+      <div class="filters compact-filters">
+        <input id="filterSearch" data-i18n-ph="phSearch" placeholder="Cari nama bisnis, alamat, atau no. telepon…">
+        <select id="filterCountry"><option value="" data-i18n="allCountries">Semua negara</option></select>
+        <select id="filterCity"><option value="" data-i18n="allCities">Semua kota</option></select>
+        <select id="filterCategory"><option value="" data-i18n="allCats">Semua jenis usaha</option></select>
+        <label class="check"><input type="checkbox" id="filterPhoneOnly"><span data-i18n="hasPhone">Ada telepon</span></label>
+      </div>
+      <div class="table-wrap wide-table">
+        <table class="explorer-table">
+          <thead><tr>
+            <th>#</th><th data-i18n="colName">Nama usaha</th><th data-i18n="colCat">Jenis usaha</th><th data-i18n="colContact">Kontak</th><th data-i18n="colAddr">Alamat</th><th data-i18n="colRate">Rating</th><th data-i18n="colAct">Aksi</th>
+          </tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="btnPrevPage">‹</button><span id="pageCurrent">1</span><button id="btnNextPage">›</button>
+        <span id="paginationInfo" class="hint"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CRM -->
+  <section id="tab-crm" class="tab-content">
+    <div class="crm-grid">
+      <div class="panel crm-side">
+        <h2 data-i18n="crmRemind">Pengingat tindak lanjut</h2>
+        <div id="reminderList" class="reminders"></div>
+        <h2 data-i18n="crmStats">Ringkasan</h2>
+        <div id="crmFunnel" class="funnel-mini"></div>
+        <div class="crm-side-actions">
+          <button id="btnExportCrm" class="btn ghost" data-i18n="btnDownload">Unduh (.xlsx)</button>
+        </div>
+      </div>
+      <div class="panel crm-main">
+        <div class="crm-head">
+          <h2 data-i18n="crmTitle">Alur pelanggan</h2>
+          <div class="crm-head-actions">
+            <input id="crmSearch" data-i18n-ph="phCrmSearch" placeholder="Cari pelanggan…">
+            <button id="btnAddLead" class="btn">+ <span data-i18n="btnAddLead">Tambah manual</span></button>
+          </div>
+        </div>
+        <div id="kanban" class="kanban"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHARTS -->
+  <section id="tab-charts" class="tab-content">
+    <div class="charts-grid">
+      <div class="panel chart-card"><h3 data-i18n="chCities">Usaha per kota</h3><div id="chartCities" class="bars"></div></div>
+      <div class="panel chart-card"><h3 data-i18n="chCats">Usaha per jenis</h3><div id="chartCategories" class="bars"></div></div>
+      <div class="panel chart-card"><h3 data-i18n="chCountries">Usaha per negara</h3><div id="chartCountries" class="bars"></div></div>
+      <div class="panel chart-card"><h3 data-i18n="chStages">Pelanggan per tahapan</h3><div id="chartStages" class="bars"></div></div>
+      <div class="panel chart-card"><h3 data-i18n="chContact">Kelengkapan kontak</h3><div id="chartContacts" class="bars"></div></div>
+      <div class="panel chart-card"><h3 data-i18n="chRating">Sebaran rating</h3><div id="chartRatings" class="bars"></div></div>
+    </div>
+  </section>
+</main>
+
+<!-- Lead drawer -->
+<div id="drawerBackdrop" class="backdrop"></div>
+<aside id="detailDrawer" class="drawer" aria-hidden="true">
+  <div class="drawer-head"><button id="btnDrawerClose" class="btn ghost">✕</button><span id="drawerCategory" class="tag"></span></div>
+  <h2 id="drawerName"></h2>
+  <p id="drawerCity" class="hint"></p>
+  <div class="drawer-row"><strong data-i18n="colContact">Kontak</strong><span id="drawerPhone"></span>
+    <div class="drawer-btns"><button id="btnCopyPhone" class="btn ghost">Salin</button><a id="btnOpenWA" class="btn" target="_blank" rel="noopener">WhatsApp</a></div>
+  </div>
+  <p id="drawerAddress"></p>
+  <div class="drawer-row"><span id="drawerRating" class="tag tag-amber"></span><span id="drawerReviews" class="hint"></span></div>
+  <div class="drawer-row drawer-links"><a id="drawerMapsLink" class="tag tag-blue" target="_blank" rel="noopener">Maps</a><a id="drawerWebLink" class="tag tag-blue" target="_blank" rel="noopener">Website</a></div>
+  <hr>
+  <h3 data-i18n="crmStage">Tahapan pelanggan</h3>
+  <div id="drawerStages" class="stage-btns"></div>
+  <label class="field"><span data-i18n="crmNext">Tindak lanjut berikutnya</span><input type="datetime-local" id="drawerNext"></label>
+  <label class="field"><span data-i18n="crmOwner">Penanggung jawab</span><input id="drawerOwner" placeholder="Nama tim"></label>
+  <label class="field"><span data-i18n="crmNote">Catatan</span><textarea id="drawerNote" rows="2"></textarea></label>
+  <button id="btnSaveLead" class="btn primary" data-i18n="btnSave">Simpan</button>
+  <h3 data-i18n="crmHistory">Riwayat</h3>
+  <div id="drawerActivities" class="activities"></div>
+  <div class="activity-add"><input id="activityText" data-i18n-ph="phActivity" placeholder="Tulis tindak lanjut…"><button id="btnAddActivity" class="btn">+</button></div>
+  <h3 data-i18n="crmTemplate">Pola pesan</h3>
+  <div class="template-row"><select id="selTemplate"></select><button id="btnCopyTemplate" class="btn ghost">Salin</button><a id="btnSendTemplateWA" class="btn" target="_blank" rel="noopener">WA</a></div>
+  <pre id="templatePreview" class="console small"></pre>
+</aside>
+
+<!-- License modal -->
+<div id="licenseModal" class="modal" hidden>
+  <div class="license-card">
+    <h2 id="licenseTitle">Selamat datang</h2>
+    <p id="licenseDesc" class="hint"></p>
+    <div id="licensePlansGrid" class="plans"></div>
+    <p id="licenseAutoStatus" class="hint" hidden><span id="licenseAutoStatusText"></span></p>
+    <label class="field"><span data-i18n="licCode">Kode aktivasi</span><input id="licenseSerialInput" placeholder="GMST-XXXX-XXXXXX" autocomplete="off"></label>
+    <p id="licenseError" class="error" hidden></p>
+    <div class="license-actions">
+      <button id="btnActivateLicense" class="btn primary" data-i18n="licActivate">Aktifkan</button>
+      <button id="btnContinueTrial" class="btn"><span id="btnContinueTrialText">Coba gratis 1 hari</span></button>
+    </div>
+    <div class="license-foot">
+      <span>ID: <code id="licenseInstallId">-</code></span>
+      <button id="btnCopyInstallId" class="btn ghost">Salin</button>
+      <button id="btnDeactivateLicense" class="btn ghost danger-text" hidden>Nonaktifkan</button>
+    </div>
+    <div class="quick-reff"><input id="inputQuickReff" data-i18n-ph="phReff" placeholder="Nomor referensi pembayaran"><button id="btnVerifyQuickReff" class="btn ghost">Cek</button></div>
+  </div>
+</div>
+
+<div id="aboutModal" class="modal" hidden><div class="license-card"><h2>GMaps CRM Pro</h2><p class="hint">v0.1.0 · 99apps.id</p><p class="hint">ID: <code id="aboutInstallId">-</code> · <span id="aboutLicenseState">-</span></p><button id="btnAboutClose" class="btn">Tutup</button></div></div>
+<div id="toastStack" class="toasts" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>
