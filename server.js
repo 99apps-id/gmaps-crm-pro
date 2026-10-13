@@ -13,7 +13,7 @@ import { CATEGORY_SECTORS, COUNTRIES, cityMeta, keywordsForCategory, labelForCat
 import { getLicenseStatus, markOnboarded, activateLicenseOnline, validateSerial, loadLicenseState, deactivateLicense } from './lib/license.js';
 import { executeScrapePlan, provinceForCity, countryForCity } from './lib/scrape-runner.js';
 import { loadStore, saveStore, importRecords, getLead, updateLead, setStage, addActivity, activitiesFor, remindersDue, remindersUpcoming, funnelStats, breakdown, normalizePhone, STAGES, applyTemplate } from './lib/crm.js';
-import { WEBHOOK_PATH, CLAIM_PATH, FINISH_PATH, verifySingapaySignature, fulfillPaymentLink, claimByReff, findLatestOrderAfter, normalizeLicenseEntries, normalizeRevoked, findPlanForSerial, paymentOptions, fetchVpsOrderByReff, fetchUpstreamPlans, createPaymentLink, resolveTransactionRefByLinkRef } from './lib/payment.js';
+import { WEBHOOK_PATH, CLAIM_PATH, FINISH_PATH, verifySingapaySignature, fulfillPaymentLink, claimByReff, findLatestOrderAfter, normalizeLicenseEntries, normalizeRevoked, findPlanForSerial, paymentOptions, fetchVpsOrderByReff, fetchUpstreamPlans, createPaymentLink, resolveTransactionRefByLinkRef, orderReuseStatus, markOrderActivated } from './lib/payment.js';
 
 const ENGINE_MODE = (process.env.ENGINE_MODE || 'local').toLowerCase();
 /** Engine GCRM HANYA di VPS (anti-jailbreak: klien tak pernah bawa engine). */
@@ -486,6 +486,16 @@ const server = http.createServer(async (req, res) => {
       }
       if (!order?.serial) {
         return json(res, 200, { found: false, message: 'Pembayaran belum ditemukan atau masih diproses' });
+      }
+      const reuse = orderReuseStatus(reff);
+      if (reuse.found && reuse.stillActive) {
+        const baseTime = reuse.created_at ? new Date(reuse.created_at) : new Date();
+        const planOpts = { plan: order.plan || 'berbayar', durationDays: order.days || 1 };
+        const activateRes = await activateLicenseOnline(order.serial, baseTime, planOpts);
+        return json(res, 200, { found: true, serial: order.serial, plan: order.plan, days: order.days, status: activateRes.status, reused: true });
+      }
+      if (reuse.found && !reuse.stillActive) {
+        return json(res, 200, { found: false, message: 'Masa aktif lisensi dari pembayaran ini sudah habis. Silakan lakukan pembayaran baru untuk melanjutkan.', code: 'ORDER_EXPIRED' });
       }
       const planOpts = { plan: order.plan || 'berbayar', durationDays: order.days || 1 };
       const activateRes = await activateLicenseOnline(order.serial, new Date(), planOpts);
