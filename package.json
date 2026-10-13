@@ -1,6 +1,6 @@
 {
   "name": "gmaps-crm-pro",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "GMaps CRM Pro - Global business finder with built-in sales CRM",
   "author": {
     "name": "99apps.id",
@@ -54,7 +54,9 @@
     ],
     "win": {
       "icon": "electron/assets/icon.ico",
-      "target": ["nsis"]
+      "target": [
+        "nsis"
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -63,12 +65,18 @@
       "shortcutName": "GMaps CRM Pro"
     },
     "mac": {
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "icon": "electron/assets/icon.png",
       "category": "public.app-category.business"
     },
     "linux": {
-      "target": ["AppImage", "deb"],
+      "target": [
+        "AppImage",
+        "deb"
+      ],
       "icon": "electron/assets/icon.png",
       "category": "Office",
       "maintainer": "99apps.id <support@99apps.id>",
