@@ -8,6 +8,14 @@ Pencari usaha global (11 negara) + pengelola pelanggan (CRM) dalam satu aplikasi
 - **Grafik**: usaha per kota/jenis/negara, pelanggan per tahapan, kelengkapan kontak, sebaran rating.
 - **Lisensi**: coba gratis 1 hari, paket harian Rp15.000 / mingguan Rp50.000 via Singapay.
 
+## Unduh aplikasi desktop
+
+| Platform | Format | Tautan |
+| :--- | :--- | :--- |
+| **Windows** | `.exe` (NSIS) | [GMaps CRM Pro Setup](https://github.com/99apps-id/gmaps-crm-pro/releases/latest) |
+| **macOS** | `.dmg` / `.zip` | [Unduh untuk Mac](https://github.com/99apps-id/gmaps-crm-pro/releases/latest) |
+| **Linux** | `.AppImage` / `.deb` | [Unduh untuk Linux](https://github.com/99apps-id/gmaps-crm-pro/releases/latest) |
+
 ## Arsitektur (anti-jailbreak)
 
 Engine scraper **hanya ada di VPS** (`/opt/gcrm-engine`, `ENGINE_MODE=engine`,
