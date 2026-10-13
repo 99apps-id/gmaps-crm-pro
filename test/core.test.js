@@ -84,6 +84,17 @@ describe('Katalog global bilingual', () => {
     assert.ok(keywordsForCategory('pesantren', 'id').includes('pesantren'));
     assert.ok(keywordsForCategory('perkebunan', 'id').includes('perkebunan'));
   });
+  it('kategori laris CRM: kesehatan, kuliner, otomotif, jasa rumah', () => {
+    const all = new Set();
+    CATEGORY_SECTORS.forEach((s) => s.categories.forEach((c) => all.add(c.id)));
+    for (const id of ['optik', 'lab_medis', 'pijat_refleksi', 'rumah_makan_padang',
+      'seafood', 'mie_bakso', 'depot_air_minum', 'mobil_bekas', 'derek_towing',
+      'rental_mobil', 'cleaning_service', 'sedot_wc', 'pest_control']) {
+      assert.ok(all.has(id), 'hilang: ' + id);
+      assert.ok(keywordsForCategory(id, 'id').length > 0, 'keyword id kosong: ' + id);
+      assert.ok(keywordsForCategory(id, 'en').length > 0, 'keyword en kosong: ' + id);
+    }
+  });
   it('cityMeta Tokyo ketemu', () => {
     assert.equal(cityMeta('Tokyo')?.country, 'JP');
   });
