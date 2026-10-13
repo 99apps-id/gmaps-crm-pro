@@ -26,10 +26,10 @@
     </div>
   </div>
   <nav class="tabs" role="tablist">
-    <button class="nav-tab-btn active" data-tab="tab-finder" data-i18n="tabFinder">Scraper Studio</button>
-    <button class="nav-tab-btn" data-tab="tab-results" data-i18n="tabResults">Hasil</button>
-    <button class="nav-tab-btn" data-tab="tab-crm" data-i18n="tabCrm">Pelanggan (CRM)</button>
-    <button class="nav-tab-btn" data-tab="tab-charts" data-i18n="tabCharts">Grafik</button>
+    <button class="nav-tab-btn active" data-tab="tab-finder"><span class="tab-icon-wrap" style="background:#fffbeb;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="url(#boltGrad)" stroke="#d97706" stroke-width="1.5" stroke-linejoin="round"/><defs><linearGradient id="boltGrad" x1="3" y1="2" x2="21" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#fbbf24"/><stop offset="1" stop-color="#ea580c"/></linearGradient></defs></svg></span><span data-i18n="tabFinder">Scraper Studio</span></button>
+    <button class="nav-tab-btn" data-tab="tab-results"><span class="tab-icon-wrap" style="background:#eff6ff;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#2563eb" stroke-width="2" fill="#ffffff"/><path d="M3 9H21" stroke="#2563eb" stroke-width="2"/><path d="M9 3V21" stroke="#3b82f6" stroke-width="1.8"/><circle cx="6" cy="6" r="1.3" fill="#ef4444"/><circle cx="12" cy="14" r="1.6" fill="#10b981"/><circle cx="17" cy="14" r="1.6" fill="#f59e0b"/><circle cx="12" cy="18" r="1.6" fill="#3b82f6"/><circle cx="17" cy="18" r="1.6" fill="#8b5cf6"/></svg></span><span data-i18n="tabResults">Hasil</span></button>
+    <button class="nav-tab-btn" data-tab="tab-crm"><span class="tab-icon-wrap" style="background:#ecfdf5;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span data-i18n="tabCrm">Pelanggan (CRM)</span></button>
+    <button class="nav-tab-btn" data-tab="tab-charts"><span class="tab-icon-wrap" style="background:#f0fdf4;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="13" width="3.5" height="8" rx="1" fill="#3b82f6"/><rect x="9.5" y="8" width="3.5" height="13" rx="1" fill="#10b981"/><rect x="15.5" y="4" width="3.5" height="17" rx="1" fill="#f59e0b"/><path d="M3.5 11L9.5 6L15.5 3L20.5 4.5" stroke="#ef4444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20.5" cy="4.5" r="1.5" fill="#ef4444"/></svg></span><span data-i18n="tabCharts">Grafik</span></button>
   </nav>
   <div class="top-actions">
     <div class="lang-switch" role="group" aria-label="Bahasa / Language">
@@ -95,11 +95,27 @@
   <section id="tab-results" class="tab-content">
     <div class="panel wide">
       <div class="results-head">
-        <div class="kpi-strip" id="resultsKpi">
-          <div class="kpi-card"><div class="kpi-num" id="kpiTotal">0</div><div class="kpi-lbl" data-i18n="kpiTotal">Total usaha</div></div>
-          <div class="kpi-card ok"><div class="kpi-num" id="kpiWa">0</div><div class="kpi-lbl" data-i18n="kpiWa">No. WA valid</div></div>
-          <div class="kpi-card warn"><div class="kpi-num" id="kpiRating">-</div><div class="kpi-lbl" data-i18n="kpiRating">Rata-rata rating</div></div>
-          <div class="kpi-card info"><div class="kpi-num" id="kpiCities">0</div><div class="kpi-lbl" data-i18n="kpiCities">Kota terjangkau</div></div>
+        <div class="kpi-row" id="resultsKpi">
+          <div class="kpi-card">
+            <div class="kpi-header"><span class="kpi-title" data-i18n="kpiTotal">Total usaha</span><span class="kpi-icon" style="color:var(--color-muted);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="22.01"/><line x1="15" y1="22" x2="15" y2="22.01"/><line x1="9" y1="18" x2="9" y2="18.01"/><line x1="15" y1="18" x2="15" y2="18.01"/><line x1="9" y1="14" x2="9" y2="14.01"/><line x1="15" y1="14" x2="15" y2="14.01"/><line x1="9" y1="10" x2="9" y2="10.01"/><line x1="15" y1="10" x2="15" y2="10.01"/><line x1="9" y1="6" x2="9" y2="6.01"/><line x1="15" y1="6" x2="15" y2="6.01"/></svg></span></div>
+            <div class="kpi-number" id="kpiTotal">0</div>
+            <div class="kpi-caption" id="kpiTotalCap">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header"><span class="kpi-title" data-i18n="kpiWa">No. WA valid</span><span class="kpi-icon" style="color:var(--color-ok);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span></div>
+            <div class="kpi-number" id="kpiWa">0</div>
+            <div class="kpi-caption" id="kpiWaPct">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header"><span class="kpi-title" data-i18n="kpiRating">Rata-rata rating</span><span class="kpi-icon" style="color:var(--color-warn);"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span></div>
+            <div class="kpi-number" id="kpiRating">-</div>
+            <div class="kpi-caption" id="kpiRatingCap">-</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-header"><span class="kpi-title" data-i18n="kpiCities">Kota terjangkau</span><span class="kpi-icon" style="color:var(--color-accent);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span></div>
+            <div class="kpi-number" id="kpiCities">0</div>
+            <div class="kpi-caption" id="kpiCitiesList">-</div>
+          </div>
         </div>
         <div class="results-title-group">
           <h2 data-i18n="resultsTitle">Hasil pencarian</h2>

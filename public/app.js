@@ -385,15 +385,25 @@ function isWaValid(phone) {
   return d.startsWith('08') || d.startsWith('0');
 }
 
-/** Ringkasan ala GMST di atas hasil: total, WA valid, rata-rata rating, kota. */
+/** Ringkasan ala GMST di atas hasil: total, WA valid + %, rating, kota + daftar. */
 function updateResultsKpi() {
   const rows = filteredRecords.length ? filteredRecords : [];
   const fmt = (n) => n.toLocaleString(uiLang === 'en' ? 'en-US' : 'id-ID');
+  const en = uiLang === 'en';
   $('kpiTotal').textContent = fmt(rows.length);
-  $('kpiWa').textContent = fmt(rows.filter((r) => isWaValid(r.phone)).length);
+  $('kpiTotalCap').textContent = en ? 'unique verified listings' : 'usaha unik terverifikasi';
+  const waCount = rows.filter((r) => isWaValid(r.phone)).length;
+  $('kpiWa').textContent = fmt(waCount);
+  const pct = rows.length ? Math.round((waCount / rows.length) * 100) : 0;
+  $('kpiWaPct').textContent = en ? `${pct}% have contact numbers` : `${pct}% memiliki nomor kontak`;
   const ratings = rows.map((r) => r.rating).filter((r) => typeof r === 'number' && r > 0);
   $('kpiRating').textContent = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '-';
-  $('kpiCities').textContent = fmt(new Set(rows.map((r) => r.city).filter(Boolean)).size);
+  $('kpiRatingCap').textContent = en ? 'stars from Google reviews' : 'bintang dari ulasan Google';
+  const cities = [...new Set(rows.map((r) => r.city).filter(Boolean))];
+  $('kpiCities').textContent = fmt(cities.length);
+  $('kpiCitiesList').textContent = cities.length
+    ? cities.slice(0, 4).join(', ') + (cities.length > 4 ? ` +${cities.length - 4}` : '')
+    : (en ? 'City and district areas' : 'Area kota dan kecamatan');
 }
 
 function renderTable() {
