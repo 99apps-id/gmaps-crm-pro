@@ -29,6 +29,41 @@ const VPS_BASE = (process.env.LICENSE_SERVER_URL || 'https://gmst.dewa.ai.id').r
 
 let mainWindow = null;
 let serverProc = null;
+let pendingProtocolUrl = null;
+
+const { PROTOCOL, parseProtocolUrl } = require('./protocol.cjs');
+
+/** gmaps-crm-pro://activate?serial=GMST-... -> teruskan ke renderer. */
+function handleProtocolUrl(url) {
+  const parsed = parseProtocolUrl(url);
+  if (!parsed) {
+    mainLog('protocol: URL/serial tidak valid.');
+    return;
+  }
+  mainLog(`protocol: aktivasi ${parsed.serial.slice(0, 12)}...`);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+    mainWindow.webContents.send('gcrm:protocol-activate', { serial: parsed.serial });
+  } else {
+    pendingProtocolUrl = parsed.serial;
+  }
+}
+
+function flushPendingProtocol() {
+  if (pendingProtocolUrl && mainWindow && !mainWindow.isDestroyed()) {
+    mainLog('protocol: teruskan antrean ke renderer.');
+    mainWindow.webContents.send('gcrm:protocol-activate', { serial: pendingProtocolUrl });
+    pendingProtocolUrl = null;
+  }
+}
+
+// Renderer menarik serial deep-link saat boot (anti-race dengan push di atas).
+ipcMain.handle('protocol-pending', () => {
+  const s = pendingProtocolUrl;
+  pendingProtocolUrl = null;
+  return s;
+});
 
 // Lisensi & data user di folder userData (tidak ikut terhapus saat update,
 // tidak bisa dibaca dari asar oleh user lain).
@@ -135,6 +170,7 @@ function createWindow() {
   });
 
   mainWindow.loadURL(SERVER_URL);
+  mainWindow.webContents.on('did-finish-load', flushPendingProtocol);
   mainWindow.on('closed', () => { mainWindow = null; });
 }
 
@@ -161,20 +197,43 @@ ipcMain.handle('open-external', async (_evt, url) => {
   }
 });
 
-// Single instance: fokuskan jendela bila dibuka 2x
+// Single instance: fokuskan jendela bila dibuka 2x.
+// Instans kedua bisa berupa klik deep-link gmaps-crm-pro://... (Windows
+// meneruskan URL sebagai argumen baris perintah).
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
+  app.on('second-instance', (_evt, argv) => {
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
+    const proto = (argv || []).find((a) => String(a).toLowerCase().startsWith(`${PROTOCOL}://`));
+    if (proto) handleProtocolUrl(proto);
+  });
+  // macOS: event open-url untuk custom protocol.
+  app.on('open-url', (evt, url) => {
+    evt.preventDefault();
+    handleProtocolUrl(url);
   });
 }
 
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
+
+  // Daftarkan custom protocol agar tombol "Aktifkan Otomatis di Aplikasi"
+  // dari halaman klaim VPS membuka aplikasi ini (hanya versi packaged agar
+  // dev tidak membajak skema di mesin vendor).
+  if (app.isPackaged) {
+    try {
+      if (!app.isDefaultProtocolClient(PROTOCOL)) app.setAsDefaultProtocolClient(PROTOCOL);
+    } catch (err) {
+      mainLog(`protocol register gagal: ${err.message}`);
+    }
+    // Windows: peluncuran pertama via deep-link membawa URL di argv.
+    const protoArg = process.argv.slice(1).find((a) => String(a).toLowerCase().startsWith(`${PROTOCOL}://`));
+    if (protoArg) handleProtocolUrl(protoArg);
+  }
 
   // Tripwire integritas (hanya versi packaged): asar yang dibedah/dimodifikasi
   // membuat engine dimatikan. Non-blocking: aplikasi tetap dibuka (user bisa

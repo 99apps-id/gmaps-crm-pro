@@ -820,6 +820,12 @@ function stopPolling() { if (autoTimer) { clearInterval(autoTimer); autoTimer = 
 async function handleActivate() {
   const serial = ($('licenseSerialInput').value || '').trim();
   if (!serial) { toast(uiLang === 'en' ? 'Enter the code first.' : 'Isi kode dulu.', 'warn'); return; }
+  await activateSerial(serial);
+  $('licenseSerialInput').value = '';
+}
+
+/** Aktivasi 1-klik dari deep-link gmaps-crm-pro://activate?serial=... */
+async function activateSerial(serial) {
   $('btnActivateLicense').disabled = true;
   try {
     const res = await fetch('/api/license/activate', {
@@ -828,15 +834,38 @@ async function handleActivate() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'Gagal');
     licenseState = data.status;
-    $('licenseSerialInput').value = '';
     renderLicense();
     toast(uiLang === 'en' ? 'Active. All features open.' : 'Aktif. Semua fitur terbuka.', 'success');
+    return true;
   } catch (e) {
     $('licenseError').textContent = e.message;
     $('licenseError').hidden = false;
+    openLicenseModal(licenseState?.blocked ? 'expired' : 'status');
+    return false;
   } finally {
     $('btnActivateLicense').disabled = false;
   }
+}
+
+let lastProtocolHandled = { serial: '', at: 0 };
+function setupProtocolActivate() {
+  const handle = async ({ serial } = {}) => {
+    if (!serial) return;
+    // Abaikan duplikat push+pull untuk serial yang sama (<10 detik).
+    const now = Date.now();
+    if (lastProtocolHandled.serial === serial && now - lastProtocolHandled.at < 10000) return;
+    lastProtocolHandled = { serial, at: now };
+    stopPolling();
+    toast(uiLang === 'en' ? 'Payment link received — activating…' : 'Tautan pembayaran diterima — mengaktifkan…');
+    await activateSerial(serial);
+  };
+  try {
+    window.electronAPI?.onProtocolActivate?.(handle);
+    // Tarik antrean deep-link (kasus aplikasi dingin dibuka via link).
+    window.electronAPI?.protocolPending?.().then((serial) => {
+      if (serial) handle({ serial });
+    }).catch(() => {});
+  } catch { /* browser biasa: abaikan */ }
 }
 
 // ---------- Init ----------
@@ -850,6 +879,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadPlans();
   connectSSE();
   syncScrapingState();
+  setupProtocolActivate();
 
   $('langId').addEventListener('click', () => { uiLang = 'id'; localStorage.setItem('gcrm-lang', uiLang); applyLang(); setScraping(isScraping); });
   $('langEn').addEventListener('click', () => { uiLang = 'en'; localStorage.setItem('gcrm-lang', uiLang); applyLang(); setScraping(isScraping); });

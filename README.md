@@ -54,12 +54,18 @@ npm test
   karena engine menolak serial tak terdaftar).
 - Aktivasi aplikasi verifikasi ke VPS dulu (sumber kebenaran); fallback lokal
   hanya bila VPS tak terjangkau.
-- Setelah user membayar: aplikasi polling tiap 3 detik + halaman finish lokal
-  `http://127.0.0.1:3219/api/payment/finish?ref=...` mengaktifkan otomatis.
-  Vendor: isi `success_redirect_url` payment link Singapay dengan URL tersebut
-  (ganti `{...}` dengan placeholder nomor referensi Singapay) agar aktivasi
-  benar-benar otomatis; alternatifnya user tempel nomor referensi di kotak
-  "Cek" pada modal lisensi.
+- Alur bayar → aktif otomatis (dashboard Singapay hanya menerima
+  `success_redirect_url` statis, tanpa localhost/placeholder):
+  1. Vendor isi `success_redirect_url` kedua payment link dengan URL statis:
+     `https://gmst.dewa.ai.id/api/gcrm/api/payment/claim`
+  2. Usai bayar, browser user membuka halaman klaim → isi nomor referensi
+     dari struk → tampil kode + tombol **Aktifkan Otomatis di Aplikasi**.
+  3. Satu klik tombol membuka aplikasi (`gmaps-crm-pro://activate?...`)
+     dan lisensi aktif sendiri (verifikasi VPS). Tanpa klik pun bisa:
+     tempel nomor referensi di kotak "Cek" modal lisensi, atau tempel kode
+     manual — ketiganya mem-proxy ke VPS.
+- Polling tiap 3 detik setelah klik Beli tetap jalan untuk kasus webhook
+  lokal (dev/VPS).
 
 ## Build installer
 

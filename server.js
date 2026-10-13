@@ -472,11 +472,11 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // Halaman finish lokal: target success_redirect agar aplikasi AKTIF
-  // OTOMATIS begitu user selesai bayar (browser user = mesin yang sama
-  // dengan aplikasi, sehingga localhost terjangkau).
-  // Vendor: isi success_redirect_url payment link Singapay dengan:
-  //   http://127.0.0.1:3219/api/payment/finish?ref={nomor_referensi}
+  // Halaman finish lokal (cadangan bila dibuka manual di mesin yang sama).
+  // Catatan: dashboard Singapay hanya menerima success_redirect_url statis
+  // (menolak localhost & placeholder dinamis), jadi arsitektur resmi:
+  // success_redirect = halaman klaim VPS (statis, di bawah) yang berisi
+  // tombol deep-link gmaps-crm-pro://activate?serial=... (1 klik aktif).
   if (pathname === FINISH_PATH && req.method === 'GET') {
     const ref = String(urlObj.searchParams.get('ref') || urlObj.searchParams.get('reff_no') || '').trim();
     const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -540,9 +540,25 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // Halaman klaim kode aktivasi. Dipakai sebagai success_redirect_url
+  // STATIS payment link Singapay (dashboard menolak localhost/placeholder):
+  //   https://gmst.dewa.ai.id/api/gcrm/api/payment/claim
+  // - Mode client (aplikasi user): redirect 302 ke halaman klaim VPS.
+  // - Mode engine GCRM (GCRM_BRAND=1): render tombol deep-link 1-klik
+  //   gmaps-crm-pro://activate?serial=... + salin manual sebagai cadangan.
   if (pathname === CLAIM_PATH && req.method === 'GET') {
+    const VPS_CLAIM = 'https://gmst.dewa.ai.id/api/gcrm/api/payment/claim';
+    if (ENGINE_MODE === 'client') {
+      const ref = String(urlObj.searchParams.get('ref') || '').trim();
+      res.writeHead(302, { Location: ref ? `${VPS_CLAIM}?ref=${encodeURIComponent(ref)}` : VPS_CLAIM });
+      res.end();
+      return;
+    }
+    const GCRM_BRAND = process.env.GCRM_BRAND === '1';
     const ref = String(urlObj.searchParams.get('ref') || '').trim();
     const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const css = `body{font-family:system-ui,sans-serif;background:#f8fafc;color:#0f172a;display:flex;justify-content:center;padding:2rem 1rem}main{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1.5rem;max-width:440px;width:100%}.serial{font-family:monospace;font-size:1.25rem;font-weight:800;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:.7rem;text-align:center}.btn{display:block;text-align:center;background:#0f2a4a;color:#fff;border-radius:8px;padding:.8rem;font-weight:800;text-decoration:none;margin:.8rem 0}.missing{color:#be123c}input{width:100%;padding:.55rem;border:1px solid #cbd5e1;border-radius:6px;font-size:.9rem;margin:.5rem 0;box-sizing:border-box}button{background:#0f2a4a;color:#fff;border:none;border-radius:6px;padding:.55rem 1rem;font-weight:700;cursor:pointer}`;
+    const title = GCRM_BRAND ? 'Klaim Kode Aktivasi - GMaps CRM Pro' : 'Klaim Kode Aktivasi';
     let inner;
     if (!ref) {
       inner = `<p>Masukkan nomor referensi pembayaran dari struk Singapay Anda:</p>
@@ -552,14 +568,20 @@ const server = http.createServer(async (req, res) => {
         </form>`;
     } else {
       const rec = claimByReff(ref);
-      inner = rec
-        ? `<p>Pembayaran terkonfirmasi (paket <b>${esc(rec.plan)}</b>, ${rec.days} hari).</p>
-           <p>Kode aktivasi Anda:</p><div class="serial">${esc(rec.serial)}</div>
-           <p>Salin kode ke aplikasi: Pengaturan - Lisensi - Aktivasi.</p>`
-        : `<p class="missing">Referensi tidak ditemukan. Hubungi support@99apps.id.</p><p><a href="${CLAIM_PATH}">Coba lagi</a></p>`;
+      if (rec) {
+        const deep = `gmaps-crm-pro://activate?serial=${encodeURIComponent(rec.serial)}`;
+        inner = `<p>Pembayaran terkonfirmasi (paket <b>${esc(rec.plan)}</b>, ${rec.days} hari).</p>
+           <p>Kode aktivasi Anda:</p><div class="serial">${esc(rec.serial)}</div>` +
+          (GCRM_BRAND
+            ? `<a class="btn" href="${esc(deep)}">Aktifkan Otomatis di Aplikasi</a>
+               <p><small>Belum terinstal? <a href="https://github.com/99apps-id/gmaps-crm-pro/releases/latest">Unduh GMaps CRM Pro</a>, lalu tempel kode di menu Lisensi.</small></p>`
+            : `<p>Salin kode ke aplikasi: Pengaturan - Lisensi - Aktivasi.</p>`);
+      } else {
+        inner = `<p class="missing">Referensi tidak ditemukan. Hubungi support@99apps.id.</p><p><a href="${CLAIM_PATH}">Coba lagi</a></p>`;
+      }
     }
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(`<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Klaim Kode Aktivasi</title><style>body{font-family:system-ui,sans-serif;background:#f8fafc;color:#0f172a;display:flex;justify-content:center;padding:2rem 1rem}main{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:1.5rem;max-width:440px;width:100%}.serial{font-family:monospace;font-size:1.25rem;font-weight:800;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:.7rem;text-align:center}</style></head><body><main><h1>Klaim Kode Aktivasi</h1>${inner}</main></body></html>`);
+    res.end(`<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${css}</style></head><body><main><h1>${esc(title)}</h1>${inner}</main></body></html>`);
     return;
   }
 
@@ -926,7 +948,9 @@ const server = http.createServer(async (req, res) => {
   const ext = path.extname(filePath).toLowerCase();
   const mime = { '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-    res.writeHead(200, { 'Content-Type': (mime[ext] || 'application/octet-stream') + (['.html', '.css', '.js'].includes(ext) ? '; charset=utf-8' : ''), 'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=3600' });
+    // Aset UI tidak di-cache agresif: update aplikasi (asar baru) harus
+    // langsung terasa di renderer tanpa cache basi.
+    res.writeHead(200, { 'Content-Type': (mime[ext] || 'application/octet-stream') + (['.html', '.css', '.js'].includes(ext) ? '; charset=utf-8' : ''), 'Cache-Control': 'no-cache' });
     fs.createReadStream(filePath).pipe(res);
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plain' });

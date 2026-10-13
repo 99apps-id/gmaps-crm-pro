@@ -47,6 +47,7 @@
       "public/**/*",
       "electron/main.cjs",
       "electron/preload.cjs",
+      "electron/protocol.cjs",
       "electron/integrity-check.cjs",
       "electron/assets/icon.png",
       "electron/assets/icon.ico",
