@@ -106,6 +106,16 @@ describe('Katalog global bilingual', () => {
       assert.ok(keywordsForCategory(id, 'en').length > 0, 'keyword en kosong: ' + id);
     }
   });
+  it('batch fashion, hewan, jasa, kampus', () => {
+    const all = new Set();
+    CATEGORY_SECTORS.forEach((s) => s.categories.forEach((c) => all.add(c.id)));
+    for (const id of ['toko_baju', 'toko_emas', 'tailor', 'petshop', 'toko_tani',
+      'kursus_mengemudi', 'biro_jasa_pt', 'homecare', 'sumur_bor', 'universitas']) {
+      assert.ok(all.has(id), 'hilang: ' + id);
+      assert.ok(keywordsForCategory(id, 'id').length > 0, 'keyword id kosong: ' + id);
+      assert.ok(keywordsForCategory(id, 'en').length > 0, 'keyword en kosong: ' + id);
+    }
+  });
   it('cityMeta Tokyo ketemu', () => {
     assert.equal(cityMeta('Tokyo')?.country, 'JP');
   });
