@@ -95,6 +95,17 @@ describe('Katalog global bilingual', () => {
       assert.ok(keywordsForCategory(id, 'en').length > 0, 'keyword en kosong: ' + id);
     }
   });
+  it('batch properti, event, keuangan, energi', () => {
+    const all = new Set();
+    CATEGORY_SECTORS.forEach((s) => s.categories.forEach((c) => all.add(c.id)));
+    for (const id of ['developer_perumahan', 'jasa_interior', 'wedding_organizer',
+      'event_organizer', 'sewa_sound_lighting', 'dekorasi_event', 'leasing',
+      'koperasi', 'panel_surya', 'pangkalan_gas']) {
+      assert.ok(all.has(id), 'hilang: ' + id);
+      assert.ok(keywordsForCategory(id, 'id').length > 0, 'keyword id kosong: ' + id);
+      assert.ok(keywordsForCategory(id, 'en').length > 0, 'keyword en kosong: ' + id);
+    }
+  });
   it('cityMeta Tokyo ketemu', () => {
     assert.equal(cityMeta('Tokyo')?.country, 'JP');
   });
