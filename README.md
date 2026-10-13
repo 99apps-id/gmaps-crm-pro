@@ -1,100 +1,159 @@
-# GMaps CRM Pro
+<div align="center">
 
-Pencari usaha global (11 negara) + pengelola pelanggan (CRM) dalam satu aplikasi desktop Electron.
+  <img src="public/favicon.svg" alt="GMaps CRM Pro Logo" width="80" height="80">
 
-- **Scraper Studio**: cari calon pembeli per negara, kategori usaha, dan wilayah. Bahasa Indonesia / English.
-- **Hasil**: saring, kirim ke CRM, unduh Excel/CSV/JSON.
-- **CRM**: alur Baru → Dihubungi → Tindak Lanjut → Negosiasi → Berhasil/Gagal, pengingat, pola pesan WA bilingual, export Excel CRM.
-- **Grafik**: usaha per kota/jenis/negara, pelanggan per tahapan, kelengkapan kontak, sebaran rating.
-- **Lisensi**: coba gratis 1 hari, paket harian Rp15.000 / mingguan Rp50.000 via Singapay.
+  # GMaps CRM Pro — Scraper Studio Global + CRM
+  ### Pencari usaha global 11 negara + pengelola pelanggan dalam satu aplikasi desktop
 
-## Unduh aplikasi desktop
+  [![Release](https://img.shields.io/github/v/release/99apps-id/gmaps-crm-pro?color=2563eb&label=Release&logo=github)](https://github.com/99apps-id/gmaps-crm-pro/releases/latest)
+  [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-emerald?logo=electron)](https://github.com/99apps-id/gmaps-crm-pro/releases/latest)
+  [![License](https://img.shields.io/badge/License-Commercial%20%2F%20Trial-amber)](https://github.com/99apps-id/gmaps-crm-pro)
+  [![Payment](https://img.shields.io/badge/Payment-QRIS%20%26%20VA-blue)](#-lisensi--pembayaran)
 
-| Platform | Format | Tautan |
+  <p align="center">
+    Platform desktop intelijen direktori bisnis Google Maps global dengan kategori bilingual (Indonesia/English),
+    CRM pelanggan bawaan (kanban, pengingat, pola pesan WA), grafik analitik, serta ekspor multi-format (Excel/CSV/JSON).
+  </p>
+
+  [📥 Unduh Installer](#-unduh-aplikasi-desktop) •
+  [✨ Fitur Utama](#-fitur-utama) •
+  [📸 Screenshot](#-antarmuka-aplikasi) •
+  [💳 Lisensi & Pembayaran](#-lisensi--pembayaran) •
+  [🚀 Cara Menjalankan](#-cara-menjalankan-development)
+
+</div>
+
+---
+
+## 📸 Antarmuka Aplikasi
+
+### 1. Scraper Studio — Cari Calon Pembeli Global
+Pilih dari 120+ kategori bisnis bilingual, target negara & wilayah hingga kecamatan, lalu pantau progres live via Server-Sent Events (SSE).
+<p align="center">
+  <img src="public/screenshots/preview-studio.png" alt="GMaps CRM Pro Scraper Studio" width="100%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+</p>
+
+### 2. Hasil & KPI ala Enterprise
+Jelajahi ribuan listing lengkap kontak WhatsApp, rating, koordinat, dan filter instan — dengan ringkasan KPI (total, WA valid, rating, kota).
+<p align="center">
+  <img src="public/screenshots/preview-results.png" alt="GMaps CRM Pro Hasil & KPI" width="100%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+</p>
+
+### 3. CRM Pelanggan Bawaan
+Kirim hasil ke CRM dalam 1 klik: kanban Baru → Dihubungi → Tindak Lanjut → Negosiasi → Berhasil/Gagal, pengingat follow-up, pola pesan WA bilingual.
+<p align="center">
+  <img src="public/screenshots/preview-crm.png" alt="GMaps CRM Pro CRM" width="100%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+</p>
+
+### 4. Lisensi & Aktivasi Otomatis Pembayaran
+Masa coba gratis 1 hari, lalu paket harian/mingguan. Setelah bayar via QRIS/VA, aplikasi aktif otomatis (1-klik deep-link, tanpa ketik ulang kode).
+<p align="center">
+  <img src="public/screenshots/preview-license.png" alt="GMaps CRM Pro License & Payment" width="100%" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+</p>
+
+---
+
+## ✨ Fitur Utama
+
+- 🎯 **120+ Kategori Bisnis Bilingual**: kuliner, kesehatan, otomotif, properti, sekolah & pesantren, agrobisnis, fashion, event, keuangan, energi — semua dengan keyword ID/EN yang dioptimalkan.
+- 🗺️ **11 Negara, Sedalam Kecamatan**: Indonesia (Jabodetabek s.d. Papua), Malaysia, Jepang, Cina, Korea Selatan, AS, Kanada, Italia, Belanda, Jerman, Perancis — query otomatis dipecah per kecamatan/distrik.
+- 📇 **CRM Terintegrasi**: kanban drag-and-drop, pengingat tindak lanjut (terlambat & 7 hari ke depan), riwayat aktivitas, skor prioritas leads 1–5, pola pesan WA bilingual siap kirim.
+- 📊 **Grafik Analitik**: usaha per kota/jenis/negara, pelanggan per tahapan, kelengkapan kontak, sebaran rating.
+- 📱 **One-Click WhatsApp**: klik langsung membuka `https://wa.me/62...` tanpa simpan kontak; badge telepon + filter khusus WA valid.
+- 📊 **Multi-Format Export**: Excel (.xlsx multi-sheet + ringkasan), CSV (UTF-8 BOM), JSON — untuk Finder maupun CRM.
+- 🔒 **Engine Terpusat Anti-Jailbreak**: scraper hanya berjalan di VPS (klien tidak membawa engine); serial wajib terdaftar; tripwire integritas mematikan engine bila aplikasi dimodifikasi.
+
+---
+
+## 📥 Unduh Aplikasi Desktop
+
+| Platform | Format | Tautan Download |
 | :--- | :--- | :--- |
-| **Windows** | `.exe` (NSIS) | [GMaps CRM Pro Setup](https://github.com/99apps-id/gmaps-crm-pro/releases/latest) |
-| **macOS** | `.dmg` / `.zip` | [Unduh untuk Mac](https://github.com/99apps-id/gmaps-crm-pro/releases/latest) |
-| **Linux** | `.AppImage` / `.deb` | [Unduh untuk Linux](https://github.com/99apps-id/gmaps-crm-pro/releases/latest) |
+| **Windows** | `.exe` (NSIS Installer) | [**Download GMaps CRM Pro Setup**](https://github.com/99apps-id/gmaps-crm-pro/releases/latest) |
+| **macOS** | `.dmg` / `.zip` (Apple Silicon) | [**Download untuk Mac**](https://github.com/99apps-id/gmaps-crm-pro/releases/latest) |
+| **Linux** | `.AppImage` / `.deb` | [**Download untuk Linux**](https://github.com/99apps-id/gmaps-crm-pro/releases/latest) |
 
-## Arsitektur (anti-jailbreak)
+> Catatan macOS: aplikasi belum di-sign Apple — klik-kanan → Open pada peluncuran pertama.
 
-Engine scraper **hanya ada di VPS** (`/opt/gcrm-engine`, `ENGINE_MODE=engine`,
-wajib serial terdaftar — tanpa serial, engine menolak `403 ENGINE_AUTH`).
-Paket klien Electron **tidak membawa** `lib/scraper.js` (tidak dibundel) dan
-dipaksa `ENGINE_MODE=client`, sehingga membongkar aplikasi tidak memberi akses
-engine. Lapisan pengaman:
+---
 
-1. Engine VPS wajib serial terdaftar di allowlist (`ENGINE_REQUIRE_SERIAL=1`,
-   `ENGINE_STRICT=1`, allowlist = `/opt/gmst-engine/licenses.json` milik GMST).
-2. Tripwire integritas: hash `app.asar` dibanding hash resmi
-   `https://gmst.dewa.ai.id/gcrm-integrity.json`; tak cocok → engine dimatikan.
-3. Lisensi, engine, dan payment terpusat mengikuti proyek GMST
-   (`https://gmst.dewa.ai.id`, serial prefix `GMST-`, webhook Singapay di VPS).
+## 💳 Lisensi & Pembayaran
 
-## Jalankan dev
+Aplikasi ini dilengkapi masa percobaan gratis (**Trial 1 Hari**) sejak pertama diinstal:
 
-```sh
+- **Paket Harian (1 Hari)**: Rp 15.000 — untuk kebutuhan penarikan prospek harian.
+- **Paket Mingguan (7 Hari)**: Rp 50.000 — paling hemat untuk agensi dan tim sales.
+
+> **Aktivasi Instan Otomatis**: setelah pembayaran QRIS/VA selesai, halaman klaim menampilkan tombol **Aktifkan Otomatis di Aplikasi** — satu klik, lisensi aktif tanpa mengetik ulang kode. Alternatif: tempel nomor referensi di modal Lisensi.
+
+Lisensi, engine, dan pembayaran terpusat di server resmi.
+
+---
+
+## 🚀 Cara Menjalankan (Development)
+
+Untuk kontributor atau developer yang ingin menjalankan proyek dari source code:
+
+```bash
+# Clone repository
+git clone https://github.com/99apps-id/gmaps-crm-pro.git
+cd gmaps-crm-pro
+
+# Install dependensi
 npm install
+
+# Jalankan server lokal (http://localhost:3219)
 npm start
-# buka http://localhost:3219
+
+# Jalankan aplikasi desktop Electron
+npm run electron
 ```
 
-Env dev yang berguna:
+### Mode engine
 
-```sh
-# Mode klien (pakai engine VPS, tanpa scraping lokal)
+```bash
+# Lokal (pakai engine built-in)
+node server.js
+
+# Klien (pakai engine VPS, seperti versi paket)
 ENGINE_MODE=client node server.js
-# Mode luring total (tanpa verifikasi VPS; butuh LICENSE_SECRET VPS)
-LICENSE_SERVER_URL=off LICENSE_SECRET="..." node server.js
 ```
 
-## Test
+### Test
 
-```sh
+```bash
 npm test
 ```
 
-## Lisensi & pembayaran (mengikuti GMST)
+### Build Installer Mandiri
 
-- Serial diterbitkan VPS (webhook Singapay otomatis, atau
-  `LICENSE_SECRET="..." node tools/gen-license.js --count N` oleh vendor —
-  hasilnya **wajib** digabung ke `/opt/gmst-engine/licenses.json` di VPS
-  karena engine menolak serial tak terdaftar).
-- Aktivasi aplikasi verifikasi ke VPS dulu (sumber kebenaran); fallback lokal
-  hanya bila VPS tak terjangkau.
-- Alur bayar → aktif otomatis (dashboard Singapay hanya menerima
-  `success_redirect_url` statis, tanpa localhost/placeholder):
-  1. Vendor isi `success_redirect_url` kedua payment link dengan URL statis:
-     `https://gmst.dewa.ai.id/api/gcrm/api/payment/claim`
-  2. Usai bayar, browser user membuka halaman klaim → isi nomor referensi
-     dari struk → tampil kode + tombol **Aktifkan Otomatis di Aplikasi**.
-  3. Satu klik tombol membuka aplikasi (`gmaps-crm-pro://activate?...`)
-     dan lisensi aktif sendiri (verifikasi VPS). Tanpa klik pun bisa:
-     tempel nomor referensi di kotak "Cek" modal lisensi, atau tempel kode
-     manual — ketiganya mem-proxy ke VPS.
-- Polling tiap 3 detik setelah klik Beli tetap jalan untuk kasus webhook
-  lokal (dev/VPS).
+```bash
+# Windows
+npm run dist:win
 
-## Build installer
+# macOS
+npm run dist:mac
 
-```sh
-npm run dist:win   # Windows .exe
-npm run dist:mac   # macOS .dmg
-npm run dist:linux # Linux AppImage + .deb
+# Linux
+npm run dist:linux
 ```
 
-Setelah build Windows, publikasikan hash integritas ke VPS agar tripwire aktif:
+Rilis multi-platform otomatis via GitHub Actions setiap tag `v*`.
 
-```sh
-node -e "const c=require('crypto'),f=require('fs'),h=c.createHash('sha256');h.update(f.readFileSync('release/win-unpacked/resources/app.asar'));console.log(JSON.stringify({sha256:h.digest('hex')}))" > integrity.json
-scp -i ~/.ssh/Nara.pem -P 2233 integrity.json naracitrasolusindo@103.126.116.111:/opt/gcrm-static/gcrm-integrity.json
-```
+---
 
-## Struktur
+## 🏗️ Arsitektur
 
 - `server.js` — API finder + CRM + lisensi + payment (+ endpoint engine saat `ENGINE_MODE=engine` di VPS)
-- `lib/` — license, payment, catalog (global bilingual), crm, scrape-runner, excel
-- `lib/scraper.js` — **engine dev-only, TIDAK dibundel ke paket publik** (paket klien memakai VPS via ENGINE_MODE=client)
-- `public/` — UI elegan bilingual
-- `electron/` — main, preload, integrity-check
+- `lib/` — license, payment, catalog (global bilingual), crm, scrape-runner, excel, xlsx (penulis Excel mandiri nol-dep)
+- `lib/scraper.js` — **modul engine internal, tidak disertakan dalam paket aplikasi**
+- `public/` — UI bilingual (ID/EN)
+- `electron/` — main, preload, protocol deep-link, integrity-check
 - `tools/` — gen-license (vendor), build-icon
+
+---
+
+<div align="center">
+  <p>Dikembangkan oleh <b><a href="https://99apps.id">99apps.id</a></b> • Hak Cipta dilindungi Undang-Undang</p>
+  <p>Butuh bantuan teknis atau kemitraan lisensi? Hubungi <b>support@99apps.id</b></p>
+</div>

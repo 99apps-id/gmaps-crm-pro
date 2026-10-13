@@ -473,7 +473,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Halaman finish lokal (cadangan bila dibuka manual di mesin yang sama).
-  // Catatan: dashboard Singapay hanya menerima success_redirect_url statis
+  // Catatan: dashboard payment hanya menerima success_redirect_url statis
   // (menolak localhost & placeholder dinamis), jadi arsitektur resmi:
   // success_redirect = halaman klaim VPS (statis, di bawah) yang berisi
   // tombol deep-link gmaps-crm-pro://activate?serial=... (1 klik aktif).
@@ -541,7 +541,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Halaman klaim kode aktivasi. Dipakai sebagai success_redirect_url
-  // STATIS payment link Singapay (dashboard menolak localhost/placeholder):
+  // STATIS payment link (dashboard menolak localhost/placeholder):
   //   https://gmst.dewa.ai.id/api/gcrm/api/payment/claim
   // - Mode client (aplikasi user): redirect 302 ke halaman klaim VPS.
   // - Mode engine GCRM (GCRM_BRAND=1): render tombol deep-link 1-klik
@@ -561,7 +561,7 @@ const server = http.createServer(async (req, res) => {
     const title = GCRM_BRAND ? 'Klaim Kode Aktivasi - GMaps CRM Pro' : 'Klaim Kode Aktivasi';
     let inner;
     if (!ref) {
-      inner = `<p>Masukkan nomor referensi pembayaran dari struk Singapay Anda:</p>
+      inner = `<p>Masukkan nomor referensi pembayaran dari struk pembayaran Anda:</p>
         <form method="GET" action="${CLAIM_PATH}">
           <input name="ref" placeholder="cth: 18917720251110094037705" autocomplete="off" />
           <button type="submit">Tampilkan Kode</button>

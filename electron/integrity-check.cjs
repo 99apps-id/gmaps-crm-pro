@@ -1,6 +1,6 @@
 /**
  * Integrity tripwire (CJS, tanpa dependensi) - GMaps CRM Pro.
- * Reuse pola GMST: hash app.asar vs hash resmi VPS.
+ * Hash app.asar vs hash resmi VPS.
  */
 
 const crypto = require('crypto');

@@ -50,8 +50,7 @@
       "electron/protocol.cjs",
       "electron/integrity-check.cjs",
       "electron/assets/icon.png",
-      "electron/assets/icon.ico",
-      "electron/assets/icon-gmst.png"
+      "electron/assets/icon.ico"
     ],
     "win": {
       "icon": "electron/assets/icon.ico",

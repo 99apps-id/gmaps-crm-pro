@@ -385,7 +385,7 @@ function isWaValid(phone) {
   return d.startsWith('08') || d.startsWith('0');
 }
 
-/** Ringkasan ala GMST di atas hasil: total, WA valid + %, rating, kota + daftar. */
+/** Ringkasan di atas hasil: total, WA valid + %, rating, kota + daftar. */
 function updateResultsKpi() {
   const rows = filteredRecords.length ? filteredRecords : [];
   const fmt = (n) => n.toLocaleString(uiLang === 'en' ? 'en-US' : 'id-ID');

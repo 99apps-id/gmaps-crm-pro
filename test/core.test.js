@@ -5,14 +5,14 @@ import { generateSerial, validateSerial, TRIAL_DAYS, getLicenseStatus, SERIAL_PR
 import { planForAmount, paymentOptions, parseClaimHtml } from '../lib/payment.js';
 import { CATEGORY_SECTORS, COUNTRIES, cityMeta, keywordsForCategory } from '../lib/catalog.js';
 
-describe('Lisensi GCRM ikut skema GMST, trial 1 hari', () => {
+describe('Lisensi terpusat, trial 1 hari', () => {
   it('TRIAL_DAYS tepat 1', () => {
     assert.equal(TRIAL_DAYS, 1);
   });
-  it('prefix mengikuti GMST (satu VPS)', () => {
+  it('prefix serial terpusat (satu VPS)', () => {
     assert.equal(SERIAL_PREFIX, 'GMST');
   });
-  it('serial GMST roundtrip valid, prefix lain ditolak', () => {
+  it('serial roundtrip valid, prefix lain ditolak', () => {
     const s = generateSerial('s3cret');
     assert.ok(s.startsWith('GMST-'));
     assert.equal(validateSerial(s, 's3cret').ok, true);
@@ -37,7 +37,7 @@ describe('Paket 15rb dan 50rb', () => {
     assert.equal(planForAmount(15000).id, 'harian');
     assert.equal(planForAmount(50000).id, 'mingguan');
   });
-  it('punya URL checkout bawaan (ikut VPS GMST)', () => {
+  it('punya URL checkout bawaan (ikut VPS resmi)', () => {
     for (const p of paymentOptions()) {
       assert.match(p.url, /^https:\/\/payment-link\.singapay\.id\//);
     }
@@ -116,7 +116,7 @@ describe('Katalog global bilingual', () => {
       assert.ok(keywordsForCategory(id, 'en').length > 0, 'keyword en kosong: ' + id);
     }
   });
-  it('impor unik dari GMST (duplikat beda-nama dilewati)', () => {
+  it('impor unik antar-katalog (duplikat beda-nama dilewati)', () => {
     const all = new Set();
     CATEGORY_SECTORS.forEach((s) => s.categories.forEach((c) => all.add(c.id)));
     for (const id of ['barbershop', 'fisioterapi', 'body_repair', 'coworking',

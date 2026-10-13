@@ -1,7 +1,7 @@
 /**
  * GMaps CRM Pro - Electron Main.
  *
- * Pola GMST: server.js dijalankan sebagai child process (ELECTRON_RUN_AS_NODE
+ * Pola teruji: server.js dijalankan sebagai child process (ELECTRON_RUN_AS_NODE
  * agar 1 binary bisa menjalankannya), dibuka via HTTP + token acak agar
  * tidak pernah salah menempel ke dashboard dev lain.
  *
@@ -163,7 +163,7 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => mainWindow.show());
 
-  // Link eksternal (checkout Singapay) dibuka di browser sistem.
+  // Link eksternal (checkout pembayaran) dibuka di browser sistem.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:\/\//i.test(url)) shell.openExternal(url);
     return { action: 'deny' };
@@ -184,7 +184,7 @@ ipcMain.handle('window-control', (_evt, action) => {
   } else if (action === 'close') mainWindow.close();
 });
 
-// Buka link eksternal (pembayaran Singapay) di browser sistem default
+// Buka link eksternal (pembayaran) di browser sistem default
 ipcMain.handle('open-external', async (_evt, url) => {
   try {
     if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
