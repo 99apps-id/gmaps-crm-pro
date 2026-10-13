@@ -783,17 +783,32 @@ async function loadPlans() {
 function renderPlans(plans) {
   const box = $('licensePlansGrid');
   box.innerHTML = [...plans].sort((a, b) => a.days - b.days).map((p) => `
-    <div class="license-plan-card" data-url="${esc(p.url)}" role="button" tabindex="0">
+    <div class="license-plan-card" data-plan-id="${esc(p.id)}" data-url="${esc(p.url || '')}" role="button" tabindex="0">
       ${p.days >= 7 ? '<span class="license-plan-badge">Hemat</span>' : ''}
       <div class="license-plan-name">${esc(p.shortLabel)}</div>
       <div class="license-plan-price">${esc(p.amountLabel)}</div>
       <div class="license-plan-cta"><span>${uiLang === 'en' ? 'Buy' : 'Beli Paket'}</span></div>
     </div>`).join('');
   box.querySelectorAll('.license-plan-card').forEach((card) => {
-    const go = () => {
-      if (!card.dataset.url) { toast(uiLang === 'en' ? 'Payment link not set yet.' : 'Link pembayaran belum diset.', 'warn'); return; }
-      if (window.electronAPI?.openExternal) window.electronAPI.openExternal(card.dataset.url);
-      else window.open(card.dataset.url, '_blank', 'noopener');
+    const go = async () => {
+      let url = card.dataset.url;
+      if (!url) {
+        card.classList.add('is-loading');
+        try {
+          const res = await fetch('/api/payment/options');
+          const data = await res.json();
+          const plan = (data.plans || []).find((p) => p.id === card.dataset.planId);
+          url = String(plan?.url || '').trim();
+          if (url) {
+            card.dataset.url = url;
+            cachedPlans = data.plans;
+          }
+        } catch { /* fallback ke url lama */ }
+        card.classList.remove('is-loading');
+      }
+      if (!url) { toast(uiLang === 'en' ? 'Payment link not set yet.' : 'Link pembayaran belum diset.', 'warn'); return; }
+      if (window.electronAPI?.openExternal) window.electronAPI.openExternal(url);
+      else window.open(url, '_blank', 'noopener');
       startPolling();
     };
     card.addEventListener('click', go);

@@ -13,7 +13,7 @@ import { CATEGORY_SECTORS, COUNTRIES, cityMeta, keywordsForCategory, labelForCat
 import { getLicenseStatus, markOnboarded, activateLicenseOnline, validateSerial, loadLicenseState, deactivateLicense } from './lib/license.js';
 import { executeScrapePlan, provinceForCity, countryForCity } from './lib/scrape-runner.js';
 import { loadStore, saveStore, importRecords, getLead, updateLead, setStage, addActivity, activitiesFor, remindersDue, remindersUpcoming, funnelStats, breakdown, normalizePhone, STAGES, applyTemplate } from './lib/crm.js';
-import { WEBHOOK_PATH, CLAIM_PATH, FINISH_PATH, verifySingapaySignature, fulfillPaymentLink, claimByReff, findLatestOrderAfter, normalizeLicenseEntries, normalizeRevoked, findPlanForSerial, paymentOptions, fetchVpsOrderByReff, fetchUpstreamPlans } from './lib/payment.js';
+import { WEBHOOK_PATH, CLAIM_PATH, FINISH_PATH, verifySingapaySignature, fulfillPaymentLink, claimByReff, findLatestOrderAfter, normalizeLicenseEntries, normalizeRevoked, findPlanForSerial, paymentOptions, fetchVpsOrderByReff, fetchUpstreamPlans, createPaymentLink } from './lib/payment.js';
 
 const ENGINE_MODE = (process.env.ENGINE_MODE || 'local').toLowerCase();
 /** Engine GCRM HANYA di VPS (anti-jailbreak: klien tak pernah bawa engine). */
@@ -433,18 +433,41 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/payment/options' && req.method === 'GET') {
-    const local = paymentOptions();
-    // URL checkout live ikut VPS bila lokal kosong (rotasi cukup sekali di VPS).
-    if (local.every((p) => !p.url)) {
-      const upstream = await fetchUpstreamPlans().catch(() => null);
-      if (upstream?.length) {
-        res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=3600' });
-        res.end(JSON.stringify({ currency: 'IDR', claimUrl: CLAIM_PATH, plans: upstream }));
-        return;
+    if (ENGINE_MODE === 'client') {
+      try {
+        const upstream = await fetch(`${ENGINE_URL}/api/payment/options`, {
+          headers: { Accept: 'application/json' }
+        });
+        if (upstream.ok) {
+          const data = await upstream.json();
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' });
+          res.end(JSON.stringify(data));
+          return;
+        }
+      } catch {
+        // fallback ke lokal bila VPS gagal
       }
     }
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=3600' });
-    res.end(JSON.stringify({ currency: 'IDR', claimUrl: CLAIM_PATH, plans: local }));
+    let plans = paymentOptions();
+    let dynamicError = null;
+    const results = await Promise.all(plans.map(async (plan) => {
+      try {
+        const result = await createPaymentLink({ planId: plan.id });
+        if (result?.url) {
+          plan.url = result.url;
+          plan.dynamic = result.dynamic;
+          plan.reffNo = result.reffNo || null;
+          if (result.error && !dynamicError) dynamicError = result.error;
+        }
+      } catch (err) {
+        if (!dynamicError) dynamicError = err?.message || 'Gagal membuat payment link dinamis';
+      }
+      return plan;
+    }));
+    const payload = { currency: 'IDR', claimUrl: CLAIM_PATH, plans: results };
+    if (dynamicError) payload.dynamicError = dynamicError;
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60' });
+    res.end(JSON.stringify(payload));
     return;
   }
 
