@@ -572,18 +572,25 @@ const server = http.createServer(async (req, res) => {
       }
       let payload;
       try {
-        payload = safeJsonParse(rawBody);
-        if (!payload) {
-          console.error('[Payment] Webhook body tidak valid:', {
-            len: rawBody?.length,
-            head: rawBody ? rawBody.slice(0, 200) : '',
+        if (!rawBody || !rawBody.trim().length) {
+          console.error('[Payment] Webhook body kosong:', {
             headers: {
               ct: headers['content-type'],
               sig: headers['x-signature'] ? 'present' : 'missing',
               ts: headers['x-timestamp']
             }
           });
-          return json(res, 400, { status: 'error', message: 'Body JSON tidak valid' });
+          return json(res, 400, { status: 'error', message: 'Body webhook kosong' });
+        }
+        payload = safeJsonParse(rawBody);
+        if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+          console.error('[Payment] Webhook payload bukan object:', {
+            type: typeof payload,
+            isArray: Array.isArray(payload),
+            len: rawBody?.length,
+            head: rawBody ? rawBody.slice(0, 200) : ''
+          });
+          return json(res, 400, { status: 'error', message: 'Payload webhook harus berupa object JSON' });
         }
       } catch {
         return json(res, 400, { status: 'error', message: 'Body JSON tidak valid' });
