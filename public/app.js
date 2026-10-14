@@ -783,7 +783,7 @@ async function loadPlans() {
 function renderPlans(plans) {
   const box = $('licensePlansGrid');
   box.innerHTML = [...plans].sort((a, b) => a.days - b.days).map((p) => `
-    <div class="license-plan-card" data-plan-id="${esc(p.id)}" data-url="${esc(p.url || '')}" role="button" tabindex="0">
+    <div class="license-plan-card" data-plan-id="${esc(p.id)}" data-url="${esc(p.url || '')}" data-reff="${esc(p.reffNo || '')}" role="button" tabindex="0">
       ${p.days >= 7 ? '<span class="license-plan-badge">Hemat</span>' : ''}
       <div class="license-plan-name">${esc(p.shortLabel)}</div>
       <div class="license-plan-price">${esc(p.amountLabel)}</div>
@@ -801,6 +801,8 @@ function renderPlans(plans) {
           url = String(plan?.url || '').trim();
           if (url) {
             card.dataset.url = url;
+            const planReff = (data.plans || []).find((p) => p.id === card.dataset.planId);
+            if (planReff?.reffNo) card.dataset.reff = planReff.reffNo;
             cachedPlans = data.plans;
           }
         } catch { /* fallback ke url lama */ }
@@ -809,14 +811,14 @@ function renderPlans(plans) {
       if (!url) { toast(uiLang === 'en' ? 'Payment link not set yet.' : 'Link pembayaran belum diset.', 'warn'); return; }
       if (window.electronAPI?.openExternal) window.electronAPI.openExternal(url);
       else window.open(url, '_blank', 'noopener');
-      startPolling();
+      startPolling(card.dataset.reff);
     };
     card.addEventListener('click', go);
     card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
   });
 }
 
-function startPolling() {
+function startPolling(reff) {
   checkoutAt = new Date().toISOString();
   $('licenseAutoStatus').hidden = false;
   $('licenseAutoStatusText').textContent = uiLang === 'en' ? 'Waiting for payment… (auto-activates)' : 'Menunggu pembayaran… (otomatis aktif)';
@@ -825,9 +827,11 @@ function startPolling() {
   autoTimer = setInterval(async () => {
     if (++n > 100 || licenseState?.activated) { stopPolling(); return; }
     try {
+      const payload = { since: checkoutAt };
+      if (reff) payload.reff = reff;
       const res = await fetch('/api/payment/auto-activate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ since: checkoutAt })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (data.found && data.status) {

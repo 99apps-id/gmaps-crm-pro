@@ -93,9 +93,9 @@ function broadcastProgress(percent, statusText, totalRecords) {
   broadcastSSE({ type: 'progress', percent, statusText, totalRecords });
 }
 
-const MAX_QUERIES_PER_CITY = 60;
-const DEEP_QUALIFIERS_ID = ['murah', 'terbaik', 'terdekat'];
-const DEEP_QUALIFIERS_EN = ['cheap', 'best', 'near me'];
+const MAX_QUERIES_PER_CITY = 100;
+const DEEP_QUALIFIERS_ID = ['murah', 'terbaik', 'terdekat', 'populer', 'rekomendasi', 'harga murah', 'berkualitas'];
+const DEEP_QUALIFIERS_EN = ['cheap', 'best', 'near me', 'popular', 'recommended', 'affordable', 'quality'];
 
 function generateQueriesForCity(city, keyword, lang = 'id', opts = {}) {
   const cleanCity = String(city || '').trim();
@@ -140,7 +140,7 @@ function generateQueriesForCity(city, keyword, lang = 'id', opts = {}) {
   return [...new Set(queries)].slice(0, MAX_QUERIES_PER_CITY);
 }
 
-function buildScrapePlan({ keyword, keywordVariants = [], cities, depth = 2, lang = 'id' }) {
+function buildScrapePlan({ keyword, keywordVariants = [], cities, depth = 3, lang = 'id' }) {
   const cityQueries = cities.map((city) => ({
     city,
     queries: generateQueriesForCity(city, keyword, lang, { keywordVariants })
@@ -159,7 +159,7 @@ function validateScrapePayload(payload) {
   if (!cities.length) throw Object.assign(new Error('Nama wilayah tidak valid'), { status: 400 });
   let depth = parseInt(payload?.depth, 10);
   if (!Number.isFinite(depth)) depth = 2;
-  depth = Math.max(1, Math.min(5, depth));
+  depth = Math.max(1, Math.min(7, depth));
   const lang = payload?.lang === 'en' ? 'en' : 'id';
   let keywordVariants = payload?.keywordVariants;
   if (typeof keywordVariants === 'string') keywordVariants = [keywordVariants];
