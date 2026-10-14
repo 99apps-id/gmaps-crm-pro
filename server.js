@@ -551,7 +551,9 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === WEBHOOK_PATH && req.method === 'POST') {
-    const secret = process.env.SINGAPAY_CLIENT_SECRET || '';
+    // Webhook boleh memakai HMAC Validation Key bila dashboard memberikannya
+    // terpisah dari Client Secret; fallback ke Client Secret bila tidak diset.
+    const secret = process.env.SINGAPAY_HMAC_KEY || process.env.SINGAPAY_CLIENT_SECRET || '';
     if (!secret) return json(res, 503, { status: 'error', message: 'Payment belum dikonfigurasi' });
     try {
       const rawBody = await new Promise((resolve, reject) => {
