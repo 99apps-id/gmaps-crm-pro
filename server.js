@@ -45,6 +45,14 @@ function json(res, code, obj) {
   res.end(JSON.stringify(obj));
 }
 
+function safeJsonParse(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  let s = raw.trim();
+  if (!s.length) return null;
+  if (s.charCodeAt(0) === 0xFEFF) s = s.slice(1);
+  try { return JSON.parse(s); } catch (e) { return null; }
+}
+
 function readJsonBody(req, limit = MAX_BODY_BYTES) {
   return new Promise((resolve, reject) => {
     let size = 0;
@@ -60,11 +68,12 @@ function readJsonBody(req, limit = MAX_BODY_BYTES) {
     });
     req.on('end', () => {
       if (!body) return resolve({});
-      try {
-        resolve(JSON.parse(body));
-      } catch {
+      const parsed = safeJsonParse(body);
+      if (parsed === null) {
         reject(Object.assign(new Error('Format data tidak valid'), { status: 400 }));
+        return;
       }
+      resolve(parsed);
     });
     req.on('error', reject);
   });
@@ -562,7 +571,21 @@ const server = http.createServer(async (req, res) => {
         return json(res, 401, { status: 'error', message: 'Invalid signature' });
       }
       let payload;
-      try { payload = JSON.parse(rawBody); } catch {
+      try {
+        payload = safeJsonParse(rawBody);
+        if (!payload) {
+          console.error('[Payment] Webhook body tidak valid:', {
+            len: rawBody?.length,
+            head: rawBody ? rawBody.slice(0, 200) : '',
+            headers: {
+              ct: headers['content-type'],
+              sig: headers['x-signature'] ? 'present' : 'missing',
+              ts: headers['x-timestamp']
+            }
+          });
+          return json(res, 400, { status: 'error', message: 'Body JSON tidak valid' });
+        }
+      } catch {
         return json(res, 400, { status: 'error', message: 'Body JSON tidak valid' });
       }
       const result = fulfillPaymentLink(payload);
