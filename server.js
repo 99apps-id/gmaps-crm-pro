@@ -10,6 +10,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { exportFinderToExcel, exportCrmToExcel } from './lib/excel.js';
 import { CATEGORY_SECTORS, COUNTRIES, cityMeta, keywordsForCategory, labelForCategory } from './lib/catalog.js';
+import { buildRegionIndex, resolveRegion } from './lib/region.js';
 import { getLicenseStatus, markOnboarded, activateLicenseOnline, validateSerial, loadLicenseState, deactivateLicense } from './lib/license.js';
 import { executeScrapePlan, provinceForCity, countryForCity } from './lib/scrape-runner.js';
 import { loadStore, saveStore, importRecords, getLead, updateLead, setStage, addActivity, activitiesFor, remindersDue, remindersUpcoming, funnelStats, breakdown, normalizePhone, STAGES, applyTemplate } from './lib/crm.js';
@@ -18,6 +19,11 @@ import { WEBHOOK_PATH, CLAIM_PATH, FINISH_PATH, verifySingapaySignature, fulfill
 const ENGINE_MODE = (process.env.ENGINE_MODE || 'local').toLowerCase();
 /** Engine GCRM HANYA di VPS (anti-jailbreak: klien tak pernah bawa engine). */
 const ENGINE_URL = (process.env.ENGINE_URL || 'https://gmst.dewa.ai.id/api/gcrm').replace(/\/+$/, '');
+
+// Indeks wilayah (kota + kecamatan -> kota/provinsi induk) untuk anchor query.
+const REGION_INDEX = buildRegionIndex(
+  COUNTRIES.flatMap((co) => (co.regions || []).flatMap((r) => (r.cities || []).map((c) => ({ name: c.name, province: c.provinceId, subDistricts: c.subDistricts }))))
+);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -115,8 +121,14 @@ function generateQueriesForCity(city, keyword, lang = 'id', opts = {}) {
     : [];
   const qualifiers = lang === 'en' ? DEEP_QUALIFIERS_EN : DEEP_QUALIFIERS_ID;
   const nearWord = lang === 'en' ? 'near' : 'dekat';
-  const meta = cityMeta(cleanCity);
-  const subs = (meta?.subDistricts || []).filter(Boolean);
+  // Resolusi wilayah: kecamatan/desa -> kota + provinsi induk.
+  const resolved = resolveRegion(cleanCity, REGION_INDEX);
+  const isDistrict = Boolean(resolved.district);
+  const searchCity = resolved.city || cleanCity;
+  const place = isDistrict ? `${cleanCity} ${searchCity}` : searchCity;
+  const regionSuffix = resolved.province ? ` ${resolved.province}` : '';
+  const meta = cityMeta(searchCity) || (resolved.cityEntry ? { subDistricts: resolved.cityEntry.subDistricts } : null);
+  const subs = (!isDistrict && meta && Array.isArray(meta.subDistricts)) ? meta.subDistricts.filter(Boolean) : [];
 
   const queries = [];
   const push = (...items) => {
@@ -126,25 +138,28 @@ function generateQueriesForCity(city, keyword, lang = 'id', opts = {}) {
     }
   };
 
-  push(`${primaryKw} ${cleanCity}`);
+  // Base query di-anchor ke kota + provinsi (cegah hasil lintas wilayah).
+  push(`${primaryKw} ${place}${regionSuffix}`);
+  push(`${primaryKw} ${place}`);
   if (lang === 'id') {
-    push(`${primaryKw} ${cleanCity} pusat`, `${primaryKw} terbaik ${cleanCity}`);
+    if (!isDistrict) push(`${primaryKw} ${place} pusat`, `${primaryKw} terbaik ${place}`);
+    else push(`${primaryKw} di ${cleanCity} ${resolved.province}`);
   } else {
-    push(`best ${primaryKw} in ${cleanCity}`, `${primaryKw} ${cleanCity} center`);
+    push(`best ${primaryKw} in ${place}`, `${primaryKw} ${place} center`);
   }
   for (const sub of subs) {
-    push(`${primaryKw} ${sub} ${cleanCity}`);
+    push(`${primaryKw} ${sub} ${searchCity}`);
     push(`${primaryKw} ${sub}`);
   }
   for (const q of qualifiers) {
-    push(lang === 'en' ? `${primaryKw} ${q} ${cleanCity}` : `${primaryKw} ${q} ${cleanCity}`);
+    push(`${primaryKw} ${q} ${place}`);
   }
   for (const v of variants) {
-    push(`${v} ${cleanCity}`);
-    for (const sub of subs.slice(0, 3)) push(`${v} ${sub} ${cleanCity}`);
+    push(`${v} ${place}`);
+    for (const sub of subs.slice(0, 3)) push(`${v} ${sub} ${searchCity}`);
   }
-  push(`${primaryKw} ${nearWord} ${cleanCity}`);
-  push(`${primaryKw} ${nearWord} station ${cleanCity}`);
+  push(`${primaryKw} ${nearWord} ${place}`);
+  push(`${primaryKw} ${nearWord} station ${place}`);
 
   return [...new Set(queries)].slice(0, MAX_QUERIES_PER_CITY);
 }
@@ -360,7 +375,21 @@ function engineClientIp(req) {
   return req.socket?.remoteAddress || 'unknown';
 }
 
-const server = http.createServer(async (req, res) => {
+const server = http.createServer((req, res) => {
+  handleRequest(req, res).catch((err) => {
+    console.error('[server] galat tak tertangani:', err?.message || err);
+    try {
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Kesalahan internal' }));
+      } else {
+        res.end();
+      }
+    } catch { /* koneksi sudah putus */ }
+  });
+});
+
+async function handleRequest(req, res) {
   setSecurityHeaders(res);
   let urlObj;
   try {
@@ -400,6 +429,19 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/catalog' && req.method === 'GET') {
     return json(res, 200, { sectors: CATEGORY_SECTORS, countries: COUNTRIES });
+  }
+
+  // RESOLVE WILAYAH (kota/kecamatan -> kota + provinsi induk) untuk pratinjau UI.
+  if (pathname === '/api/region/resolve' && req.method === 'GET') {
+    if (ENGINE_MODE === 'client') {
+      const proxied = await proxyToEngine(pathname, req, res);
+      if (proxied) return;
+    }
+    const q = String(urlObj.searchParams.get('q') || '').trim();
+    const r = resolveRegion(q, REGION_INDEX);
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=600' });
+    res.end(JSON.stringify({ input: q, city: r.city, province: r.province, district: r.district, known: r.known }));
+    return;
   }
 
   if (pathname === '/api/finder/data' && req.method === 'GET') {
@@ -485,9 +527,14 @@ const server = http.createServer(async (req, res) => {
       const payload = await readJsonBody(req);
       const reff = String(payload?.reff || '').trim();
       const since = String(payload?.since || '').trim();
+      // Keamanan: serial hanya diberikan bila pemanggil menyertakan nomor
+      // referensi miliknya (bukti kepemilikan). Fallback "since" dulu
+      // membocorkan serial pembayar terbaru ke siapa pun yang memanggil.
+      if (!reff && since) {
+        return json(res, 200, { found: false, message: 'Aktivasi otomatis butuh nomor referensi pembayaran. Masukkan nomor referensi Anda.' });
+      }
       let order = null;
       if (reff) order = claimByReff(reff);
-      else if (since) order = findLatestOrderAfter(since);
       // Klien tak menerima webhook: butir reff dicarikan ke VPS (klaim).
       if (!order?.serial && reff && ENGINE_MODE === 'client') {
         const remote = await fetchVpsOrderByReff(reff).catch(() => null);
@@ -498,7 +545,7 @@ const server = http.createServer(async (req, res) => {
       }
       const reuse = orderReuseStatus(reff);
       if (reuse.found && reuse.stillActive) {
-        const baseTime = reuse.created_at ? new Date(reuse.created_at) : new Date();
+        const baseTime = reuse.activatedAt ? new Date(reuse.activatedAt) : new Date();
         const planOpts = { plan: order.plan || 'berbayar', durationDays: order.days || 1 };
         const activateRes = await activateLicenseOnline(order.serial, baseTime, planOpts);
         return json(res, 200, { found: true, serial: order.serial, plan: order.plan, days: order.days, status: activateRes.status, reused: true });
@@ -1011,7 +1058,14 @@ const server = http.createServer(async (req, res) => {
       return;
     }
   }
-  const decodedPath = decodeURIComponent(pathname);
+  let decodedPath;
+  try {
+    decodedPath = decodeURIComponent(pathname);
+  } catch {
+    res.writeHead(400, { 'Content-Type': 'text/plain' });
+    res.end('Bad Request');
+    return;
+  }
   let filePath = path.normalize(path.join(PUBLIC_DIR, decodedPath === '/' ? 'index.html' : decodedPath));
   if (!filePath.startsWith(PUBLIC_DIR + path.sep) && filePath !== PUBLIC_DIR) {
     res.writeHead(403); res.end('Forbidden'); return;
@@ -1030,7 +1084,10 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('Not Found');
   }
-});
+}
+
+process.on('unhandledRejection', (err) => console.error('[server] unhandledRejection:', err?.message || err));
+process.on('uncaughtException', (err) => console.error('[server] uncaughtException:', err?.message || err));
 
 server.listen(PORT, () => {
   console.log('='.repeat(60));

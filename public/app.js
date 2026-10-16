@@ -303,7 +303,8 @@ function licenseBlocked() {
 
 async function startSearch() {
   if (isScraping || licenseBlocked()) return;
-  const cities = [...selectedCities];
+  const extra = ($('extraCitiesInput') ? $('extraCitiesInput').value : '').split(',').map((s) => s.trim()).filter(Boolean);
+  const cities = [...new Set([...selectedCities, ...extra])];
   if (!cities.length) { toast(uiLang === 'en' ? 'Pick at least 1 area.' : 'Pilih minimal 1 wilayah.', 'warn'); return; }
   const keyword = currentKeyword();
   const depth = parseInt($('studioDepthSelect').value, 10) || 2;
@@ -913,6 +914,22 @@ document.addEventListener('DOMContentLoaded', () => {
   $('langId').addEventListener('click', () => { uiLang = 'id'; localStorage.setItem('gcrm-lang', uiLang); applyLang(); setScraping(isScraping); });
   $('langEn').addEventListener('click', () => { uiLang = 'en'; localStorage.setItem('gcrm-lang', uiLang); applyLang(); setScraping(isScraping); });
   $('selCountry').addEventListener('change', (e) => { selectedCountry = e.target.value; selectedCities.clear(); renderRegions(); updateScopeHint(); });
+  const extraInput = $('extraCitiesInput');
+  if (extraInput) {
+    let et = null;
+    const preview = async () => {
+      const box = $('extraCitiesPreview');
+      if (!box) return;
+      const parts = extraInput.value.split(',').map((s) => s.trim()).filter((s) => s.length >= 2);
+      if (!parts.length) { box.textContent = ''; return; }
+      try {
+        const data = await Promise.all(parts.slice(0, 6).map((p) => fetch('/api/region/resolve?q=' + encodeURIComponent(p)).then((r) => r.json()).catch(() => null)));
+        const lines = data.map((d) => { if (!d || !d.known) return null; const bits = [d.city, d.province].filter(Boolean).join(', '); return d.district ? `${d.district} → ${bits}` : bits; }).filter(Boolean);
+        box.textContent = lines.length ? `Terbaca: ${lines.join(' · ')}` : '';
+      } catch { box.textContent = ''; }
+    };
+    extraInput.addEventListener('input', () => { clearTimeout(et); et = setTimeout(preview, 450); });
+  }
   $('selSearchLang').addEventListener('change', (e) => { searchLang = e.target.value; });
   $('studioDepthSelect').addEventListener('change', updateScopeHint);
   $('btnRunScrape').addEventListener('click', startSearch);
