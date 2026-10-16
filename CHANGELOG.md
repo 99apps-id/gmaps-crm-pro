@@ -7,3 +7,7 @@
 - UI: input **"Kota / kecamatan tambahan"** + pratinjau "Terbaca: …".
 - Hardening engine: webhook `auto-activate` wajib `reff`, handler dibungkus try/catch + guard `decodeURIComponent`, handler `unhandledRejection`/`uncaughtException`, tulis JSON atomik (temp+rename+fsync), reuse-aktivasi memakai `activatedAt`.
 - Versi desktop **0.1.6**.
+
+### 2026-10-16 (lanjutan)
+- **Penegakan masa aktif lisensi** (pembelian baru `expires_at`; serial kedaluwarsa ditolak; entri lama grandfathered).
+- **Katalog wilayah di-union dengan GMST** (26 kota) sehingga cakupan kecamatan konsisten.
